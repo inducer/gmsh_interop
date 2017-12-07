@@ -1,0 +1,41 @@
+Python 2.7:
+  script:
+  - py_version=2.7
+  - export EXTRA_INSTALL="numpy"
+  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/build-and-test-py-project.sh
+  - ". ./build-and-test-py-project.sh"
+  tags:
+  - python2.7
+  except:
+  - tags
+
+Python 3.5:
+  script:
+  - py_version=3.5
+  - export EXTRA_INSTALL="numpy"
+  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/build-and-test-py-project.sh
+  - ". ./build-and-test-py-project.sh"
+  tags:
+  - python3.5
+  except:
+  - tags
+
+Python 2.6:
+  script:
+  - py_version=2.6
+  - export EXTRA_INSTALL="numpy"
+  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/build-and-test-py-project.sh
+  - ". ./build-and-test-py-project.sh"
+  tags:
+  - python2.6
+  except:
+  - tags
+
+Flake8:
+  script:
+  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/prepare-and-run-flake8.sh
+  - ". ./prepare-and-run-flake8.sh pytools test"
+  tags:
+  - python3.5
+  except:
+  - tags
