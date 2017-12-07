@@ -15,6 +15,7 @@ to escape its obnoxious licensing.
 Links:
 
 * `Github <https://github.com/inducer/gmsh_interop>`_
+* `Python package index <https://pypi.org/project/gmsh_interop/>`_
 
 ----
 
