@@ -179,17 +179,31 @@ class GmshRunner(object):
             stdout = stdout.decode("utf-8")
             stderr = stderr.decode("utf-8")
 
-            if stderr and "error" in stderr.lower():
+            import re
+            error_match = re.match(r"([0-9]+)\s+error", stdout)
+            warning_match = re.match(r"([0-9]+)\s+warning", stdout)
+
+            if error_match is not None or warning_match is not None:
+                # if we have one, we expect to see both
+                assert error_match is not None or warning_match is not None
+
+                num_warnings = int(warning_match.group(1))
+                num_errors = int(error_match.group(1))
+            else:
+                num_warnings = 0
+                num_errors = 0
+
+            if num_errors:
                 msg = "gmsh execution failed with message:\n\n"
                 if stdout:
                     msg += stdout+"\n"
                 msg += stderr+"\n"
                 raise GmshError(msg)
 
-            if stderr:
+            if num_warnings:
                 from warnings import warn
 
-                msg = "gmsh issued the following messages:\n\n"
+                msg = "gmsh issued the following warning messages:\n\n"
                 if stdout:
                     msg += stdout+"\n"
                 msg += stderr+"\n"
@@ -199,7 +213,7 @@ class GmshRunner(object):
 
             self.temp_dir_mgr = temp_dir_mgr
             return self
-        except:
+        except Exception:
             temp_dir_mgr.clean_up()
             raise
 
