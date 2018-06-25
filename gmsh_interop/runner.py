@@ -95,7 +95,7 @@ class GmshRunner(object):
     def __init__(self, source, dimensions=None, order=None,
             incomplete_elements=None, other_options=[],
             extension="geo", gmsh_executable="gmsh",
-            output_file_name="output.msh"):
+            output_file_name="output.msh", keep_tmp_dir=False):
         if isinstance(source, str):
             from warnings import warn
             warn("passing a string as 'source' is deprecated--use "
@@ -111,6 +111,7 @@ class GmshRunner(object):
         self.other_options = other_options
         self.gmsh_executable = gmsh_executable
         self.output_file_name = output_file_name
+        self.keep_tmp_dir = keep_tmp_dir
 
         if dimensions not in [1, 2, 3, None]:
             raise RuntimeError("dimensions must be one of 1,2,3 or None")
@@ -196,6 +197,24 @@ class GmshRunner(object):
                 warn(msg)
 
             self.output_file = open(output_file_name, "r")
+
+            if self.keep_tmp_dir:
+                import shutil, errno
+                try:
+                    shutil.copytree(working_dir, "./gmsh_tmp")
+                except FileExistsError as exc:
+                    import select, sys
+                    print("File ./gmsh_tmp exists! Overwrite? (Y/N, will default to Y in 10sec).")
+                    i, o, e = select.select([sys.stdin], [], [], 10)
+                    if i == "N":
+                        pass
+                    else:
+                        shutil.rmtree("./gmsh_tmp")
+                        shutil.copytree(working_dir, "./gmsh_tmp")
+                except OSError as exc:
+                    if exc.errno == errno.ENOTDIR:
+                        shutil.copy(output_file_name, "./" + self.output_file_name)
+                    else: raise
 
             self.temp_dir_mgr = temp_dir_mgr
             return self
