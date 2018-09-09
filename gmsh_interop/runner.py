@@ -151,7 +151,8 @@ class GmshRunner(object):
             cmdline = [
                     self.gmsh_executable,
                     "-o", self.output_file_name,
-                    "-nopopup"]
+                    "-nopopup",
+                    "-format", "msh2"]
 
             if self.dimensions is not None:
                 cmdline.append("-%d" % self.dimensions)
