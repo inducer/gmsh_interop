@@ -152,7 +152,8 @@ class GmshRunner(object):
                     self.gmsh_executable,
                     "-o", self.output_file_name,
                     "-nopopup",
-                    "-format", "msh2"]
+                    "-format", "msh2",
+                    "-string", "Geometry.OCCTargetUnit='MM';"]
 
             if self.dimensions is not None:
                 cmdline.append("-%d" % self.dimensions)
