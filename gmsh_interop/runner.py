@@ -1,6 +1,9 @@
 from __future__ import division, absolute_import
 
-__copyright__ = "Copyright (C) 2017 Andreas Kloeckner"
+__copyright__ = """
+Copyright (C) 2017 Andreas Kloeckner
+Copyright (C) 2018 Alexandru Fikl
+"""
 
 __license__ = """
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -122,7 +125,7 @@ class GmshRunner(object):
             incomplete_elements=None, other_options=[],
             extension="geo", gmsh_executable="gmsh",
             output_file_name="output.msh",
-            target_unit="MM"):
+            target_unit=None):
         if isinstance(source, str):
             from warnings import warn
             warn("passing a string as 'source' is deprecated--use "
@@ -130,6 +133,12 @@ class GmshRunner(object):
                     DeprecationWarning)
 
             source = ScriptSource(source, extension)
+
+        if target_unit is None:
+            target_unit = "MM"
+            from warnings import warn
+            warn("Not specifying target_unit is deprecated. Set target_unit='MM' "
+                "to retain prior behavior.", DeprecationWarning, stacklevel=2)
 
         self.source = source
         self.dimensions = dimensions
