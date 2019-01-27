@@ -126,7 +126,7 @@ class GmshRunner(object):
             extension="geo", gmsh_executable="gmsh",
             output_file_name="output.msh",
             target_unit=None,
-            keep_tmp_dir=False)
+            keep_tmp_dir=False):
         if isinstance(source, str):
             from warnings import warn
             warn("passing a string as 'source' is deprecated--use "
@@ -169,7 +169,9 @@ class GmshRunner(object):
         from pytools.prefork import call_capture_output
         retcode, stdout, stderr = call_capture_output(cmdline)
 
-        version = stderr.decode().strip()
+        # stderr can contain irregular info
+        import re
+        version = re.search(r'[0-9].[0-9].[0-9]', stderr.decode().strip()).group()
         return LooseVersion(version)
 
     def __enter__(self):
