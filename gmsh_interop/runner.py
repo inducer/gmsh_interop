@@ -1,3 +1,32 @@
+from __future__ import division, absolute_import
+
+__copyright__ = """
+Copyright (C) 2017 Andreas Kloeckner
+Copyright (C) 2018 Alexandru Fikl
+"""
+
+__license__ = """
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+"""
+
+from pytools import memoize_method
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -95,7 +124,9 @@ class GmshRunner(object):
     def __init__(self, source, dimensions=None, order=None,
             incomplete_elements=None, other_options=[],
             extension="geo", gmsh_executable="gmsh",
-            output_file_name="output.msh", keep_tmp_dir=False):
+            output_file_name="output.msh",
+            target_unit=None,
+            keep_tmp_dir=False)
         if isinstance(source, str):
             from warnings import warn
             warn("passing a string as 'source' is deprecated--use "
@@ -103,6 +134,12 @@ class GmshRunner(object):
                     DeprecationWarning)
 
             source = ScriptSource(source, extension)
+
+        if target_unit is None:
+            target_unit = "MM"
+            from warnings import warn
+            warn("Not specifying target_unit is deprecated. Set target_unit='MM' "
+                "to retain prior behavior.", DeprecationWarning, stacklevel=2)
 
         self.source = source
         self.dimensions = dimensions
@@ -112,9 +149,28 @@ class GmshRunner(object):
         self.gmsh_executable = gmsh_executable
         self.output_file_name = output_file_name
         self.keep_tmp_dir = keep_tmp_dir
+        self.target_unit = target_unit.upper()
 
-        if dimensions not in [1, 2, 3, None]:
+        if self.dimensions not in [1, 2, 3, None]:
             raise RuntimeError("dimensions must be one of 1,2,3 or None")
+
+        if self.target_unit not in ['M', 'MM']:
+            raise RuntimeError("units must be 'M' (meters) or 'MM' (millimeters)")
+
+    @property
+    @memoize_method
+    def version(self):
+        from distutils.version import LooseVersion
+        cmdline = [
+                self.gmsh_executable,
+                '-version'
+                ]
+
+        from pytools.prefork import call_capture_output
+        retcode, stdout, stderr = call_capture_output(cmdline)
+
+        version = stderr.decode().strip()
+        return LooseVersion(version)
 
     def __enter__(self):
         self.temp_dir_mgr = None
@@ -152,7 +208,17 @@ class GmshRunner(object):
             cmdline = [
                     self.gmsh_executable,
                     "-o", self.output_file_name,
-                    "-nopopup"]
+                    "-nopopup",
+                    "-format", "msh2"]
+
+            # NOTE: handle unit incompatibility introduced in GMSH4
+            # https://gitlab.onelab.info/gmsh/gmsh/issues/397
+            if self.version < '4.0.0':
+                if self.target_unit == 'M':
+                    cmdline.extend(["-string", "Geometry.OCCScaling=1000;"])
+            else:
+                cmdline.extend(["-string",
+                    "Geometry.OCCTargetUnit='{}';".format(self.target_unit)])
 
             if self.dimensions is not None:
                 cmdline.append("-%d" % self.dimensions)
@@ -180,17 +246,31 @@ class GmshRunner(object):
             stdout = stdout.decode("utf-8")
             stderr = stderr.decode("utf-8")
 
-            if stderr and "error" in stderr.lower():
+            import re
+            error_match = re.match(r"([0-9]+)\s+error", stdout)
+            warning_match = re.match(r"([0-9]+)\s+warning", stdout)
+
+            if error_match is not None or warning_match is not None:
+                # if we have one, we expect to see both
+                assert error_match is not None or warning_match is not None
+
+                num_warnings = int(warning_match.group(1))
+                num_errors = int(error_match.group(1))
+            else:
+                num_warnings = 0
+                num_errors = 0
+
+            if num_errors:
                 msg = "gmsh execution failed with message:\n\n"
                 if stdout:
                     msg += stdout+"\n"
                 msg += stderr+"\n"
                 raise GmshError(msg)
 
-            if stderr:
+            if num_warnings:
                 from warnings import warn
 
-                msg = "gmsh issued the following messages:\n\n"
+                msg = "gmsh issued the following warning messages:\n\n"
                 if stdout:
                     msg += stdout+"\n"
                 msg += stderr+"\n"
@@ -218,7 +298,7 @@ class GmshRunner(object):
 
             self.temp_dir_mgr = temp_dir_mgr
             return self
-        except:
+        except Exception:
             temp_dir_mgr.clean_up()
             raise
 

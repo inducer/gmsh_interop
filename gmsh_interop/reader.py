@@ -619,8 +619,9 @@ def generate_gmsh(receiver, source, dimensions=None, order=None, other_options=[
             output_file_name="output.msh"):
     """Run gmsh and feed the output to *receiver*.
 
-    :arg source: an instance of :class:`LiteralSource` or :class:`FileSource`
-    :param receiver: Implements the :class:`GmshMeshReceiverBase` interface.
+    :arg receiver: a class that implements the :class:`GmshMeshReceiverBase`
+        interface.
+    :arg source: an instance of :class:`ScriptSource` or :class:`FileSource`.
     """
     from gmsh_interop.runner import GmshRunner
     runner = GmshRunner(source, dimensions, order=order,
@@ -640,12 +641,12 @@ def generate_gmsh(receiver, source, dimensions=None, order=None, other_options=[
 
 def parse_gmsh(receiver, line_iterable, force_dimension=None):
     """
-    :arg source: an instance of :class:`LiteralSource` or :class:`FileSource`
-    :arg receiver: This object will be fed the entities encountered in reading the
-        GMSH file. See :class:`GmshMeshReceiverBase` for the interface this
-        object needs to conform to.
-    :param force_dimension: if not None, truncate point coordinates to this many
-        dimensions.
+    :arg receiver: this object will be fed the entities encountered in
+        reading the GMSH file. See :class:`GmshMeshReceiverBase` for the
+        interface this object needs to conform to.
+    :arg line_iterable: an iterable that generates the lines of the GMSH file.
+    :arg force_dimension: if not *None*, truncate point coordinates to this
+        many dimensions.
     """
 
     feeder = LineFeeder(line_iterable)

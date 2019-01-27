@@ -82,8 +82,11 @@ def test_gmsh():
         skip("gmsh not found")
 
     from gmsh_interop.reader import generate_gmsh, GmshMeshReceiverBase
+    from gmsh_interop.runner import ScriptSource
+
     mr = GmshMeshReceiverBase()
-    generate_gmsh(mr, GMSH_SPHERE, 3)
+    source = ScriptSource(GMSH_SPHERE, "geo")
+    generate_gmsh(mr, source, 3)
 
 # }}}
 
