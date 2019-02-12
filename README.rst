@@ -21,7 +21,7 @@ Links:
 
 gmsh_interop is licensed to you under the MIT/X Consortium license:
 
-Copyright (c) 2009-17 Andreas Klöckner and Contributors.
+Copyright (c) 2009-17 Andreas Kloeckner and Contributors.
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
