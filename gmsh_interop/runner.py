@@ -300,7 +300,7 @@ class GmshRunner(object):
                     if decision == 0:
                         pass
                     else:
-                        assert decision == 1:
+                        assert decision == 1
                         shutil.rmtree(self.save_tmp_files_in)
                         shutil.copytree(working_dir, self.save_tmp_files_in)
                 except OSError as exc:
