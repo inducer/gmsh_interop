@@ -291,10 +291,14 @@ class GmshRunner(object):
                     decision = None
                     while not decision:
                         i, o, e = select.select([sys.stdin], [], [], 10)
-                        if i == "N" or i == "n":
+                        if i:
+                            resp = sys.stdin.readline().strip()
+                        if resp == "N" or resp == "n":
+                            logger.info("Not overwriting.")
                             decision = 0
-                        elif i == "Y" or i == "y" or not i:
+                        elif resp == "Y" or resp == "y" or not i:
                             decision = 1
+                            logger.info("Overwriting.")
                         else:
                             print("Illegal input %s, please retry." % i)
                     if decision == 0:
