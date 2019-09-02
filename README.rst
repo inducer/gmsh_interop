@@ -1,6 +1,16 @@
 Interoperability between Python and Gmsh
 ========================================
 
+.. image:: https://gitlab.tiker.net/inducer/gmsh_interop/badges/master/pipeline.svg
+    :alt: Gitlab Build Status
+    :target: https://gitlab.tiker.net/inducer/gmsh_interop/commits/master
+.. image:: https://dev.azure.com/ak-spam/inducer/_apis/build/status/inducer.gmsh_interop?branchName=master
+    :alt: Azure Build Status
+    :target: https://dev.azure.com/ak-spam/inducer/_build/latest?definitionId=15&branchName=master
+.. image:: https://badge.fury.io/py/gmsh_interop.png
+    :alt: Python Package Index Release Page
+    :target: https://pypi.org/project/gmsh_interop/
+
 This package allows Python to interoperate with the `gmsh <http://gmsh.info/>`_
 mesh generator.
 
