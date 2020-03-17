@@ -4,9 +4,9 @@ Interoperability between Python and Gmsh
 .. image:: https://gitlab.tiker.net/inducer/gmsh_interop/badges/master/pipeline.svg
     :alt: Gitlab Build Status
     :target: https://gitlab.tiker.net/inducer/gmsh_interop/commits/master
-.. image:: https://dev.azure.com/ak-spam/inducer/_apis/build/status/inducer.gmsh_interop?branchName=master
-    :alt: Azure Build Status
-    :target: https://dev.azure.com/ak-spam/inducer/_build/latest?definitionId=15&branchName=master
+.. image:: https://github.com/inducer/gmsh_interop/workflows/CI/badge.svg?branch=master
+    :alt: Github Build Status
+    :target: https://github.com/inducer/gmsh_interop/actions?query=branch%3Amaster+workflow%3ACI
 .. image:: https://badge.fury.io/py/gmsh_interop.png
     :alt: Python Package Index Release Page
     :target: https://pypi.org/project/gmsh_interop/
