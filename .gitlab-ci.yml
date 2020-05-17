@@ -30,7 +30,7 @@ Python 3:
 Flake8:
   script:
   - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/prepare-and-run-flake8.sh
-  - ". ./prepare-and-run-flake8.sh pytools test"
+  - ". ./prepare-and-run-flake8.sh gmsh_interop test"
   tags:
   - python3
   except:
