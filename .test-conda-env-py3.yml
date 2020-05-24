@@ -1,9 +1,9 @@
 name: test-conda-env
 channels:
 - conda-forge
-- defaults
+- nodefaults
 
 dependencies:
 - python=3
-- conda-forge::numpy
+- numpy
 - gmsh
