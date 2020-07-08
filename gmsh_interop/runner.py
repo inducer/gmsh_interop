@@ -281,11 +281,13 @@ class GmshRunner(object):
             self.output_file = open(output_file_name, "r")
 
             if self.save_tmp_files_in:
-                import shutil, errno
+                import shutil
+                import errno
                 try:
                     shutil.copytree(working_dir, self.save_tmp_files_in)
-                except FileExistsError as exc:
-                    import select, sys
+                except FileExistsError:
+                    import select
+                    import sys
                     print("%s exists! Overwrite? (Y/N, will default to Y in 10sec)."
                             % self.save_tmp_files_in)
                     decision = None
@@ -312,7 +314,8 @@ class GmshRunner(object):
                         shutil.copy(output_file_name,
                                     '/'.join([self.save_tmp_files_in,
                                               self.output_file_name]))
-                    else: raise
+                    else:
+                        raise
 
             self.temp_dir_mgr = temp_dir_mgr
             return self
