@@ -124,7 +124,7 @@ class GmshRunner(object):
     def __init__(self, source, dimensions=None, order=None,
             incomplete_elements=None, other_options=[],
             extension="geo", gmsh_executable="gmsh",
-            output_file_name="output.msh",
+            output_file_name=None,
             target_unit=None,
             save_tmp_files_in=None):
         if isinstance(source, str):
@@ -140,6 +140,9 @@ class GmshRunner(object):
             from warnings import warn
             warn("Not specifying target_unit is deprecated. Set target_unit='MM' "
                 "to retain prior behavior.", DeprecationWarning, stacklevel=2)
+
+        if output_file_name is None:
+            output_file_name = "output.msh"
 
         self.source = source
         self.dimensions = dimensions
@@ -291,18 +294,20 @@ class GmshRunner(object):
                     print("%s exists! Overwrite? (Y/N, will default to Y in 10sec)."
                             % self.save_tmp_files_in)
                     decision = None
-                    while not decision:
+                    while decision is None:
                         i, o, e = select.select([sys.stdin], [], [], 10)
                         if i:
                             resp = sys.stdin.readline().strip()
-                        if resp == "N" or resp == "n":
-                            logger.info("Not overwriting.")
-                            decision = 0
-                        elif resp == "Y" or resp == "y" or not i:
-                            decision = 1
-                            logger.info("Overwriting.")
+                            if resp == "N" or resp == "n":
+                                logger.info("Not overwriting.")
+                                decision = 0
+                            elif resp == "Y" or resp == "y" or not i:
+                                decision = 1
+                                logger.info("Overwriting.")
+                            else:
+                                print("Illegal input %s, please retry." % i)
                         else:
-                            print("Illegal input %s, please retry." % i)
+                            decision = 1  # default
                     if decision == 0:
                         pass
                     else:

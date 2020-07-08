@@ -616,7 +616,7 @@ def read_gmsh(receiver, filename, force_dimension=None):
 
 def generate_gmsh(receiver, source, dimensions=None, order=None, other_options=[],
             extension="geo", gmsh_executable="gmsh", force_dimension=None,
-            output_file_name="output.msh"):
+            output_file_name=None, save_tmp_files_in=None):
     """Run gmsh and feed the output to *receiver*.
 
     :arg receiver: a class that implements the :class:`GmshMeshReceiverBase`
@@ -627,7 +627,8 @@ def generate_gmsh(receiver, source, dimensions=None, order=None, other_options=[
     runner = GmshRunner(source, dimensions, order=order,
             other_options=other_options, extension=extension,
             gmsh_executable=gmsh_executable,
-            output_file_name=output_file_name)
+            output_file_name=output_file_name,
+            save_tmp_files_in=save_tmp_files_in)
 
     runner.__enter__()
     try:
