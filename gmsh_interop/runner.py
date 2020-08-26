@@ -32,7 +32,6 @@ logger = logging.getLogger(__name__)
 
 
 __doc__ = """
-
 .. exception:: GmshError
 .. autoclass:: ScriptSource
 .. autoclass:: FileSource
