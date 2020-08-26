@@ -151,19 +151,35 @@ class GmshElementBase(object):
     .. automethod:: vertex_count
     .. automethod:: node_count
     .. automethod:: lexicographic_node_tuples
+
+        Generate tuples enumerating the node indices present
+        in this element. Each tuple has a length equal to the dimension
+        of the element. The tuples constituents are non-negative integers
+        whose sum is less than or equal to the order of the element.
+
     .. automethod:: get_lexicographic_gmsh_node_indices
-    .. method:: equidistant_unit_nodes
 
       (Implemented by subclasses)
     """
     def __init__(self, order):
         self.order = order
 
+    def vertex_count(self):
+        raise NotImplementedError()
+
+    def node_count(self):
+        raise NotImplementedError()
+
+    def lexicographic_node_tuples(self):
+        raise NotImplementedError()
+
+    def get_lexicographic_gmsh_node_indices(self):
+        raise NotImplementedError()
+
 
 # {{{ simplices
 
 class GmshSimplexElementBase(GmshElementBase):
-
     def vertex_count(self):
         return self.dimensions + 1
 
@@ -178,11 +194,6 @@ class GmshSimplexElementBase(GmshElementBase):
 
     @memoize_method
     def lexicographic_node_tuples(self):
-        """Generate tuples enumerating the node indices present
-        in this element. Each tuple has a length equal to the dimension
-        of the element. The tuples constituents are non-negative integers
-        whose sum is less than or equal to the order of the element.
-        """
         from pytools import \
                 generate_nonnegative_integer_tuples_summing_to_at_most
         result = list(
