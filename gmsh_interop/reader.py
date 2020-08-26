@@ -176,6 +176,7 @@ class GmshElementBase(object):
     def get_lexicographic_gmsh_node_indices(self):
         raise NotImplementedError()
 
+
 # {{{ simplices
 
 class GmshSimplexElementBase(GmshElementBase):
