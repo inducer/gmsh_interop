@@ -507,6 +507,7 @@ class GmshMeshReceiverBase(object):
             29: GmshTetrahedralElement(3),
             30: GmshTetrahedralElement(4),
             31: GmshTetrahedralElement(5),
+            36: GmshQuadrilateralElement(3),
             92: GmshHexahedralElement(3),
             93: GmshHexahedralElement(4),
             }
