@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import
-
 __copyright__ = """
 Copyright (C) 2017 Andreas Kloeckner
 Copyright (C) 2018 Alexandru Fikl
@@ -55,7 +53,7 @@ def _erase_dir(dir):
     rmdir(dir)
 
 
-class _TempDirManager(object):
+class _TempDirManager:
     def __init__(self):
         from tempfile import mkdtemp
         self.path = mkdtemp()
@@ -71,7 +69,7 @@ class _TempDirManager(object):
         _erase_dir(self.path)
 
 
-class ScriptSource(object):
+class ScriptSource:
     """
     .. versionadded:: 2016.1
     """
@@ -85,14 +83,14 @@ class LiteralSource(ScriptSource):
     .. versionadded:: 2014.1
     """
     def __init__(self, source, extension):
-        super(LiteralSource, self).__init__(source, extension)
+        super().__init__(source, extension)
 
         from warnings import warn
         warn("LiteralSource is deprecated, use ScriptSource instead",
                 DeprecationWarning, stacklevel=2)
 
 
-class FileSource(object):
+class FileSource:
     """
     .. versionadded:: 2014.1
     """
@@ -100,7 +98,7 @@ class FileSource(object):
         self.filename = filename
 
 
-class ScriptWithFilesSource(object):
+class ScriptWithFilesSource:
     """
     .. versionadded:: 2016.1
 
@@ -119,7 +117,7 @@ class ScriptWithFilesSource(object):
         self.filenames = filenames
 
 
-class GmshRunner(object):
+class GmshRunner:
     def __init__(self, source, dimensions=None, order=None,
             incomplete_elements=None, other_options=[],
             extension="geo", gmsh_executable="gmsh",
@@ -156,7 +154,7 @@ class GmshRunner(object):
         if self.dimensions not in [1, 2, 3, None]:
             raise RuntimeError("dimensions must be one of 1,2,3 or None")
 
-        if self.target_unit not in ['M', 'MM']:
+        if self.target_unit not in ["M", "MM"]:
             raise RuntimeError("units must be 'M' (meters) or 'MM' (millimeters)")
 
     @property
@@ -165,7 +163,7 @@ class GmshRunner(object):
         from distutils.version import LooseVersion
         cmdline = [
                 self.gmsh_executable,
-                '-version'
+                "-version"
                 ]
 
         from pytools.prefork import call_capture_output
@@ -173,7 +171,7 @@ class GmshRunner(object):
 
         # stderr can contain irregular info
         import re
-        version = re.search(r'[0-9]+.[0-9]+.[0-9]+', stderr.decode().strip()).group()
+        version = re.search(r"[0-9]+.[0-9]+.[0-9]+", stderr.decode().strip()).group()
         return LooseVersion(version)
 
     def __enter__(self):
@@ -192,7 +190,7 @@ class GmshRunner(object):
             elif isinstance(self.source, FileSource):
                 source_file_name = abspath(self.source.filename)
                 if not exists(source_file_name):
-                    raise IOError("'%s' does not exist" % source_file_name)
+                    raise OSError(f"'{source_file_name}' does not exist")
 
             elif isinstance(self.source, ScriptWithFilesSource):
                 source_file_name = join(
@@ -217,23 +215,22 @@ class GmshRunner(object):
 
             # NOTE: handle unit incompatibility introduced in GMSH4
             # https://gitlab.onelab.info/gmsh/gmsh/issues/397
-            if self.version < '4.0.0':
-                if self.target_unit == 'M':
+            if self.version < "4.0.0":
+                if self.target_unit == "M":
                     cmdline.extend(["-string", "Geometry.OCCScaling=1000;"])
             else:
                 cmdline.extend(["-string",
-                    "Geometry.OCCTargetUnit='{}';".format(self.target_unit)])
+                    f"Geometry.OCCTargetUnit='{self.target_unit}';"])
 
             if self.dimensions is not None:
-                cmdline.append("-%d" % self.dimensions)
+                cmdline.append(f"-{self.dimensions}")
 
             if self.order is not None:
                 cmdline.extend(["-order", str(self.order)])
 
             if self.incomplete_elements is not None:
                 cmdline.extend(["-string",
-                    "Mesh.SecondOrderIncomplete = %d;"
-                    % int(self.incomplete_elements)])
+                    f"Mesh.SecondOrderIncomplete = {self.incomplete_elements};"])
 
             cmdline.extend(self.other_options)
             cmdline.append(source_file_name)
@@ -241,7 +238,7 @@ class GmshRunner(object):
             if self.dimensions is None:
                 cmdline.append("-")
 
-            logger.info("invoking gmsh: '%s'" % " ".join(cmdline))
+            logger.info("invoking gmsh: '%s'", " ".join(cmdline))
             from pytools.prefork import call_capture_output
             retcode, stdout, stderr = call_capture_output(
                     cmdline, working_dir)
@@ -280,7 +277,7 @@ class GmshRunner(object):
                 msg += stderr+"\n"
                 warn(msg)
 
-            self.output_file = open(output_file_name, "r")
+            self.output_file = open(output_file_name)
 
             if self.save_tmp_files_in:
                 import shutil
@@ -290,8 +287,8 @@ class GmshRunner(object):
                 except FileExistsError:
                     import select
                     import sys
-                    print("%s exists! Overwrite? (Y/N, will default to Y in 10sec)."
-                            % self.save_tmp_files_in)
+                    print(f"{self.save_tmp_files_in} exists! "
+                        "Overwrite? (Y/N, will default to Y in 10sec).")
                     decision = None
                     while decision is None:
                         i, o, e = select.select([sys.stdin], [], [], 10)
@@ -304,7 +301,7 @@ class GmshRunner(object):
                                 decision = 1
                                 logger.info("Overwriting.")
                             else:
-                                print("Illegal input %s, please retry." % i)
+                                print(f"Illegal input '{i}', please retry.")
                         else:
                             decision = 1  # default
                     if decision == 0:
@@ -316,7 +313,7 @@ class GmshRunner(object):
                 except OSError as exc:
                     if exc.errno == errno.ENOTDIR:
                         shutil.copy(output_file_name,
-                                    '/'.join([self.save_tmp_files_in,
+                                    "/".join([self.save_tmp_files_in,
                                               self.output_file_name]))
                     else:
                         raise

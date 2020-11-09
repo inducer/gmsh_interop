@@ -1,6 +1,5 @@
 """Reader for the GMSH file format."""
 
-from __future__ import division, absolute_import
 
 __copyright__ = "Copyright (C) 2009 Xueyu Zhu, Andreas Kloeckner"
 
@@ -24,7 +23,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from six.moves import range
 from functools import reduce
 
 import numpy as np
@@ -146,7 +144,7 @@ class LineFeeder:
 
 # {{{ element info
 
-class GmshElementBase(object):
+class GmshElementBase:
     """
     .. automethod:: vertex_count
     .. automethod:: node_count
@@ -205,9 +203,9 @@ class GmshSimplexElementBase(GmshElementBase):
 
     @memoize_method
     def get_lexicographic_gmsh_node_indices(self):
-        gmsh_tup_to_index = dict(
-                (tup, i)
-                for i, tup in enumerate(self.gmsh_node_tuples()))
+        gmsh_tup_to_index = {
+                tup: i
+                for i, tup in enumerate(self.gmsh_node_tuples())}
 
         return np.array([gmsh_tup_to_index[tup]
                 for tup in self.lexicographic_node_tuples()],
@@ -342,9 +340,9 @@ class GmshTensorProductElementBase(GmshElementBase):
 
     @memoize_method
     def get_lexicographic_gmsh_node_indices(self):
-        gmsh_tup_to_index = dict(
-                (tup, i)
-                for i, tup in enumerate(self.gmsh_node_tuples()))
+        gmsh_tup_to_index = {
+                tup: i
+                for i, tup in enumerate(self.gmsh_node_tuples())}
 
         return np.array([gmsh_tup_to_index[tup]
                 for tup in self.lexicographic_node_tuples()],
@@ -470,7 +468,7 @@ class GmshHexahedralElement(GmshTensorProductElementBase):
 
 # {{{ receiver interface
 
-class GmshMeshReceiverBase(object):
+class GmshMeshReceiverBase:
     """
     .. attribute:: gmsh_element_type_to_info_map
     .. automethod:: set_up_nodes
@@ -617,7 +615,7 @@ def read_gmsh(receiver, filename, force_dimension=None):
     :param force_dimension: if not None, truncate point coordinates to
         this many dimensions.
     """
-    mesh_file = open(filename, 'rt')
+    mesh_file = open(filename)
     try:
         result = parse_gmsh(receiver, mesh_file, force_dimension=force_dimension)
     finally:
@@ -673,7 +671,7 @@ def parse_gmsh(receiver, line_iterable, force_dimension=None):
         next_line = feeder.get_next_line()
         if not next_line.startswith("$"):
             raise GmshFileFormatError(
-                    "expected start of section, '%s' found instead" % next_line)
+                    f"expected start of section, '{next_line}' found instead")
 
         section_name = next_line[1:]
 
@@ -693,8 +691,7 @@ def parse_gmsh(receiver, line_iterable, force_dimension=None):
 
                 if version_number not in ["2.1", "2.2"]:
                     from warnings import warn
-                    warn("unexpected mesh version number '%s' found"
-                            % version_number)
+                    warn("unexpected mesh version number '{version_number}' found")
 
                 if file_type != "0":
                     raise GmshFileFormatError(
@@ -762,8 +759,8 @@ def parse_gmsh(receiver, line_iterable, force_dimension=None):
                     element_type = \
                             receiver.gmsh_element_type_to_info_map[el_type_num]
                 except KeyError:
-                    raise GmshFileFormatError("unexpected element type %d"
-                            % el_type_num)
+                    raise GmshFileFormatError(
+                            f"unexpected element type: {el_type_num}")
 
                 tag_count = parts[2]
                 tags = parts[3:3+tag_count]
@@ -822,7 +819,7 @@ def parse_gmsh(receiver, line_iterable, force_dimension=None):
         else:
             # unrecognized section, skip
             from warnings import warn
-            warn("unrecognized section '%s' in gmsh file" % section_name)
+            warn(f"unrecognized section '{section_name}' in gmsh file")
             while True:
                 next_line = feeder.get_next_line()
                 if next_line == "$End"+section_name:
