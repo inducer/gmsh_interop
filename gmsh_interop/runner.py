@@ -154,7 +154,7 @@ class GmshRunner:
         if self.dimensions not in [1, 2, 3, None]:
             raise RuntimeError("dimensions must be one of 1,2,3 or None")
 
-        if self.target_unit not in ['M', 'MM']:
+        if self.target_unit not in ["M", "MM"]:
             raise RuntimeError("units must be 'M' (meters) or 'MM' (millimeters)")
 
     @property
@@ -163,7 +163,7 @@ class GmshRunner:
         from distutils.version import LooseVersion
         cmdline = [
                 self.gmsh_executable,
-                '-version'
+                "-version"
                 ]
 
         from pytools.prefork import call_capture_output
@@ -171,7 +171,7 @@ class GmshRunner:
 
         # stderr can contain irregular info
         import re
-        version = re.search(r'[0-9]+.[0-9]+.[0-9]+', stderr.decode().strip()).group()
+        version = re.search(r"[0-9]+.[0-9]+.[0-9]+", stderr.decode().strip()).group()
         return LooseVersion(version)
 
     def __enter__(self):
@@ -215,8 +215,8 @@ class GmshRunner:
 
             # NOTE: handle unit incompatibility introduced in GMSH4
             # https://gitlab.onelab.info/gmsh/gmsh/issues/397
-            if self.version < '4.0.0':
-                if self.target_unit == 'M':
+            if self.version < "4.0.0":
+                if self.target_unit == "M":
                     cmdline.extend(["-string", "Geometry.OCCScaling=1000;"])
             else:
                 cmdline.extend(["-string",
@@ -314,7 +314,7 @@ class GmshRunner:
                 except OSError as exc:
                     if exc.errno == errno.ENOTDIR:
                         shutil.copy(output_file_name,
-                                    '/'.join([self.save_tmp_files_in,
+                                    "/".join([self.save_tmp_files_in,
                                               self.output_file_name]))
                     else:
                         raise
