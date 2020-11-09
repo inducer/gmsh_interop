@@ -190,7 +190,7 @@ class GmshRunner:
             elif isinstance(self.source, FileSource):
                 source_file_name = abspath(self.source.filename)
                 if not exists(source_file_name):
-                    raise OSError("'%s' does not exist" % source_file_name)
+                    raise OSError(f"'{source_file_name}' does not exist")
 
             elif isinstance(self.source, ScriptWithFilesSource):
                 source_file_name = join(
@@ -223,15 +223,14 @@ class GmshRunner:
                     f"Geometry.OCCTargetUnit='{self.target_unit}';"])
 
             if self.dimensions is not None:
-                cmdline.append("-%d" % self.dimensions)
+                cmdline.append(f"-{self.dimensions}")
 
             if self.order is not None:
                 cmdline.extend(["-order", str(self.order)])
 
             if self.incomplete_elements is not None:
                 cmdline.extend(["-string",
-                    "Mesh.SecondOrderIncomplete = %d;"
-                    % int(self.incomplete_elements)])
+                    f"Mesh.SecondOrderIncomplete = {self.incomplete_elements};"])
 
             cmdline.extend(self.other_options)
             cmdline.append(source_file_name)
@@ -239,7 +238,7 @@ class GmshRunner:
             if self.dimensions is None:
                 cmdline.append("-")
 
-            logger.info("invoking gmsh: '%s'" % " ".join(cmdline))
+            logger.info("invoking gmsh: '%s'", " ".join(cmdline))
             from pytools.prefork import call_capture_output
             retcode, stdout, stderr = call_capture_output(
                     cmdline, working_dir)
@@ -288,8 +287,8 @@ class GmshRunner:
                 except FileExistsError:
                     import select
                     import sys
-                    print("%s exists! Overwrite? (Y/N, will default to Y in 10sec)."
-                            % self.save_tmp_files_in)
+                    print(f"{self.save_tmp_files_in} exists! "
+                        "Overwrite? (Y/N, will default to Y in 10sec).")
                     decision = None
                     while decision is None:
                         i, o, e = select.select([sys.stdin], [], [], 10)
@@ -302,7 +301,7 @@ class GmshRunner:
                                 decision = 1
                                 logger.info("Overwriting.")
                             else:
-                                print("Illegal input %s, please retry." % i)
+                                print(f"Illegal input '{i}', please retry.")
                         else:
                             decision = 1  # default
                     if decision == 0:

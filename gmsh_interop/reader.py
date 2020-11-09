@@ -670,7 +670,7 @@ def parse_gmsh(receiver, line_iterable, force_dimension=None):
         next_line = feeder.get_next_line()
         if not next_line.startswith("$"):
             raise GmshFileFormatError(
-                    "expected start of section, '%s' found instead" % next_line)
+                    f"expected start of section, '{next_line}' found instead")
 
         section_name = next_line[1:]
 
@@ -690,8 +690,7 @@ def parse_gmsh(receiver, line_iterable, force_dimension=None):
 
                 if version_number not in ["2.1", "2.2"]:
                     from warnings import warn
-                    warn("unexpected mesh version number '%s' found"
-                            % version_number)
+                    warn("unexpected mesh version number '{version_number}' found")
 
                 if file_type != "0":
                     raise GmshFileFormatError(
@@ -759,8 +758,8 @@ def parse_gmsh(receiver, line_iterable, force_dimension=None):
                     element_type = \
                             receiver.gmsh_element_type_to_info_map[el_type_num]
                 except KeyError:
-                    raise GmshFileFormatError("unexpected element type %d"
-                            % el_type_num)
+                    raise GmshFileFormatError(
+                            f"unexpected element type: {el_type_num}")
 
                 tag_count = parts[2]
                 tags = parts[3:3+tag_count]
@@ -819,7 +818,7 @@ def parse_gmsh(receiver, line_iterable, force_dimension=None):
         else:
             # unrecognized section, skip
             from warnings import warn
-            warn("unrecognized section '%s' in gmsh file" % section_name)
+            warn(f"unrecognized section '{section_name}' in gmsh file")
             while True:
                 next_line = feeder.get_next_line()
                 if next_line == "$End"+section_name:
