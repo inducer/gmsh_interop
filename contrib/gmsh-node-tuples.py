@@ -78,13 +78,14 @@ def generate_node_tuples_from_gmsh(eltype, eldim, elvertices, domain="unit"):
     assert dim == eldim
     assert nvertices == elvertices
 
-    nodes = nodes.reshape(nnodes, dim) * order
     if domain == "unit":
         pass
     elif domain == "biunit":
         nodes = (1.0 + nodes) / 2.0
     else:
         raise ValueError(f"unknown domain: '{domain}'")
+
+    nodes = nodes.reshape(nnodes, dim) * order
 
     # }}}
 
