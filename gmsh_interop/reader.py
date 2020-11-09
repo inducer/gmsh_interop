@@ -1,6 +1,5 @@
 """Reader for the GMSH file format."""
 
-from __future__ import division, absolute_import
 
 __copyright__ = "Copyright (C) 2009 Xueyu Zhu, Andreas Kloeckner"
 
@@ -24,7 +23,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from six.moves import range
 from functools import reduce
 
 import numpy as np
@@ -146,7 +144,7 @@ class LineFeeder:
 
 # {{{ element info
 
-class GmshElementBase(object):
+class GmshElementBase:
     """
     .. automethod:: vertex_count
     .. automethod:: node_count
@@ -205,9 +203,9 @@ class GmshSimplexElementBase(GmshElementBase):
 
     @memoize_method
     def get_lexicographic_gmsh_node_indices(self):
-        gmsh_tup_to_index = dict(
-                (tup, i)
-                for i, tup in enumerate(self.gmsh_node_tuples()))
+        gmsh_tup_to_index = {
+                tup: i
+                for i, tup in enumerate(self.gmsh_node_tuples())}
 
         return np.array([gmsh_tup_to_index[tup]
                 for tup in self.lexicographic_node_tuples()],
@@ -342,9 +340,9 @@ class GmshTensorProductElementBase(GmshElementBase):
 
     @memoize_method
     def get_lexicographic_gmsh_node_indices(self):
-        gmsh_tup_to_index = dict(
-                (tup, i)
-                for i, tup in enumerate(self.gmsh_node_tuples()))
+        gmsh_tup_to_index = {
+                tup: i
+                for i, tup in enumerate(self.gmsh_node_tuples())}
 
         return np.array([gmsh_tup_to_index[tup]
                 for tup in self.lexicographic_node_tuples()],
@@ -470,7 +468,7 @@ class GmshHexahedralElement(GmshTensorProductElementBase):
 
 # {{{ receiver interface
 
-class GmshMeshReceiverBase(object):
+class GmshMeshReceiverBase:
     """
     .. attribute:: gmsh_element_type_to_info_map
     .. automethod:: set_up_nodes
@@ -616,7 +614,7 @@ def read_gmsh(receiver, filename, force_dimension=None):
     :param force_dimension: if not None, truncate point coordinates to
         this many dimensions.
     """
-    mesh_file = open(filename, 'rt')
+    mesh_file = open(filename)
     try:
         result = parse_gmsh(receiver, mesh_file, force_dimension=force_dimension)
     finally:

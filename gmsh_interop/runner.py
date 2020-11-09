@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import
-
 __copyright__ = """
 Copyright (C) 2017 Andreas Kloeckner
 Copyright (C) 2018 Alexandru Fikl
@@ -55,7 +53,7 @@ def _erase_dir(dir):
     rmdir(dir)
 
 
-class _TempDirManager(object):
+class _TempDirManager:
     def __init__(self):
         from tempfile import mkdtemp
         self.path = mkdtemp()
@@ -71,7 +69,7 @@ class _TempDirManager(object):
         _erase_dir(self.path)
 
 
-class ScriptSource(object):
+class ScriptSource:
     """
     .. versionadded:: 2016.1
     """
@@ -85,14 +83,14 @@ class LiteralSource(ScriptSource):
     .. versionadded:: 2014.1
     """
     def __init__(self, source, extension):
-        super(LiteralSource, self).__init__(source, extension)
+        super().__init__(source, extension)
 
         from warnings import warn
         warn("LiteralSource is deprecated, use ScriptSource instead",
                 DeprecationWarning, stacklevel=2)
 
 
-class FileSource(object):
+class FileSource:
     """
     .. versionadded:: 2014.1
     """
@@ -100,7 +98,7 @@ class FileSource(object):
         self.filename = filename
 
 
-class ScriptWithFilesSource(object):
+class ScriptWithFilesSource:
     """
     .. versionadded:: 2016.1
 
@@ -119,7 +117,7 @@ class ScriptWithFilesSource(object):
         self.filenames = filenames
 
 
-class GmshRunner(object):
+class GmshRunner:
     def __init__(self, source, dimensions=None, order=None,
             incomplete_elements=None, other_options=[],
             extension="geo", gmsh_executable="gmsh",
@@ -192,7 +190,7 @@ class GmshRunner(object):
             elif isinstance(self.source, FileSource):
                 source_file_name = abspath(self.source.filename)
                 if not exists(source_file_name):
-                    raise IOError("'%s' does not exist" % source_file_name)
+                    raise OSError("'%s' does not exist" % source_file_name)
 
             elif isinstance(self.source, ScriptWithFilesSource):
                 source_file_name = join(
@@ -222,7 +220,7 @@ class GmshRunner(object):
                     cmdline.extend(["-string", "Geometry.OCCScaling=1000;"])
             else:
                 cmdline.extend(["-string",
-                    "Geometry.OCCTargetUnit='{}';".format(self.target_unit)])
+                    f"Geometry.OCCTargetUnit='{self.target_unit}';"])
 
             if self.dimensions is not None:
                 cmdline.append("-%d" % self.dimensions)
@@ -280,7 +278,7 @@ class GmshRunner(object):
                 msg += stderr+"\n"
                 warn(msg)
 
-            self.output_file = open(output_file_name, "r")
+            self.output_file = open(output_file_name)
 
             if self.save_tmp_files_in:
                 import shutil

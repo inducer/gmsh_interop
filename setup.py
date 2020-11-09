@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-# -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages
 
@@ -13,7 +12,7 @@ exec(compile(version_file_contents, version_file_name, 'exec'), ver_dic)
 setup(name="gmsh_interop",
       version=ver_dic["VERSION_TEXT"],
       description="A parser for GMSH's .msh format",
-      long_description=open("README.rst", "r").read(),
+      long_description=open("README.rst").read(),
       classifiers=[
           'Development Status :: 4 - Beta',
           'Intended Audience :: Developers',
