@@ -20,6 +20,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import pytest
+
 
 # {{{ gmsh
 
@@ -73,18 +75,72 @@ l7 = newreg; Line Loop(l7) = {-c2, -c7, -c12};Ruled Surface(newreg) = {l7};
 l8 = newreg; Line Loop(l8) = {-c6, -c9, c2};  Ruled Surface(newreg) = {l8};
 """
 
+GMSH_QUAD_SPHERE = """
+SetFactory("OpenCASCADE");
+Sphere(1) = { 0, 0, 0, 1 };
 
-def test_gmsh():
+Recombine Surface "*";
+Mesh 2;
+"""
+
+GMSH_QUAD_CUBE = """
+SetFactory("OpenCASCADE");
+Box(1) = {0, 0, 0, 1, 1, 1};
+
+Transfinite Line "*" = 8;
+Transfinite Surface "*";
+Transfinite Volume "*";
+
+Mesh.RecombineAll = 1;
+Mesh.Recombine3DAll = 1;
+Mesh.Recombine3DLevel = 2;
+
+Mesh 3;
+"""
+
+
+@pytest.mark.parametrize("dim", [2, 3])
+@pytest.mark.parametrize("order", [1, 3])
+def test_simplex_gmsh(dim, order, visualize=False):
     if search_on_path(["gmsh"]) is None:
-        from pytest import skip
-        skip("gmsh not found")
+        pytest.skip("gmsh executable not found")
+
+    if visualize:
+        save_tmp_files_in = f"simplex_{order}_{dim}d"
+    else:
+        save_tmp_files_in = None
 
     from gmsh_interop.reader import generate_gmsh, GmshMeshReceiverBase
     from gmsh_interop.runner import ScriptSource
 
     mr = GmshMeshReceiverBase()
     source = ScriptSource(GMSH_SPHERE, "geo")
-    generate_gmsh(mr, source, 3)
+    generate_gmsh(mr, source, dimensions=dim, order=order,
+            save_tmp_files_in=save_tmp_files_in)
+
+
+@pytest.mark.parametrize("dim", [2, 3])
+@pytest.mark.parametrize("order", [1, 3])
+def test_quad_gmsh(dim, order, visualize=False):
+    if search_on_path(["gmsh"]) is None:
+        pytest.skip("gmsh executable not found")
+
+    if visualize:
+        save_tmp_files_in = f"simplex_{order}_{dim}d"
+    else:
+        save_tmp_files_in = None
+
+    from gmsh_interop.reader import generate_gmsh, GmshMeshReceiverBase
+    from gmsh_interop.runner import ScriptSource
+
+    if dim == 2:
+        source = ScriptSource(GMSH_QUAD_SPHERE, "geo")
+    else:
+        source = ScriptSource(GMSH_QUAD_CUBE, "geo")
+
+    mr = GmshMeshReceiverBase()
+    generate_gmsh(mr, source, dimensions=dim, order=order,
+            save_tmp_files_in=save_tmp_files_in)
 
 # }}}
 
@@ -94,7 +150,6 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         exec(sys.argv[1])
     else:
-        from pytest import main
-        main([__file__])
+        pytest.main([__file__])
 
 # vim: foldmethod=marker
