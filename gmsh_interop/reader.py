@@ -162,17 +162,28 @@ class GmshElementBase:
     def __init__(self, order):
         self.order = order
 
+    @property
+    def element_type(self):
+        raise NotImplementedError
+
     def vertex_count(self):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def node_count(self):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def lexicographic_node_tuples(self):
-        raise NotImplementedError()
+        raise NotImplementedError
 
+    @memoize_method
     def get_lexicographic_gmsh_node_indices(self):
-        raise NotImplementedError()
+        gmsh_tup_to_index = {
+                tup: i
+                for i, tup in enumerate(self.gmsh_node_tuples())}
+
+        return np.array([
+            gmsh_tup_to_index[tup] for tup in self.lexicographic_node_tuples()],
+            dtype=np.intp)
 
 
 # {{{ simplices
@@ -193,27 +204,19 @@ class GmshSimplexElementBase(GmshElementBase):
     @memoize_method
     def lexicographic_node_tuples(self):
         from pytools import \
-                generate_nonnegative_integer_tuples_summing_to_at_most
-        result = list(
-                generate_nonnegative_integer_tuples_summing_to_at_most(
-                    self.order, self.dimensions))
+                generate_nonnegative_integer_tuples_summing_to_at_most as gnitstam
+        result = list(gnitstam(self.order, self.dimensions))
 
         assert len(result) == self.node_count()
         return result
 
-    @memoize_method
-    def get_lexicographic_gmsh_node_indices(self):
-        gmsh_tup_to_index = {
-                tup: i
-                for i, tup in enumerate(self.gmsh_node_tuples())}
-
-        return np.array([gmsh_tup_to_index[tup]
-                for tup in self.lexicographic_node_tuples()],
-                dtype=np.intp)
-
 
 class GmshPoint(GmshSimplexElementBase):
     dimensions = 0
+
+    @property
+    def element_type(self):
+        return 15
 
     @memoize_method
     def gmsh_node_tuples(self):
@@ -222,6 +225,11 @@ class GmshPoint(GmshSimplexElementBase):
 
 class GmshIntervalElement(GmshSimplexElementBase):
     dimensions = 1
+
+    @property
+    @memoize_method
+    def element_type(self):
+        return [1, 8, 26, 27, 28, 62, 63, 64, 65, 66][self.order - 1]
 
     @memoize_method
     def gmsh_node_tuples(self):
@@ -234,6 +242,11 @@ class GmshIncompleteTriangularElement(GmshSimplexElementBase):
 
     def __init__(self, order):
         self.order = order
+
+    @property
+    @memoize_method
+    def element_type(self):
+        return {3: 20, 4: 22, 5: 24}[self.order]
 
     @memoize_method
     def gmsh_node_tuples(self):
@@ -248,66 +261,31 @@ class GmshIncompleteTriangularElement(GmshSimplexElementBase):
 class GmshTriangularElement(GmshSimplexElementBase):
     dimensions = 2
 
+    @property
+    @memoize_method
+    def element_type(self):
+        from gmsh_interop.node_tuples import triangle_data
+        return triangle_data[self.order]["element_type"]
+
     @memoize_method
     def gmsh_node_tuples(self):
-        return {
-                1: [
-                    (0, 0), (1, 0), (0, 1),
-                    ],
-                2: [
-                    (0, 0), (2, 0), (0, 2), (1, 0), (1, 1), (0, 1),
-                    ],
-                3: [
-                    (0, 0), (3, 0), (0, 3), (1, 0), (2, 0), (2, 1), (1, 2), (0, 2),
-                    (0, 1), (1, 1),
-                    ],
-                4: [
-                    (0, 0), (4, 0), (0, 4), (1, 0), (2, 0), (3, 0), (3, 1), (2, 2),
-                    (1, 3), (0, 3), (0, 2), (0, 1), (1, 1), (2, 1), (1, 2),
-                    ],
-                5: [
-                    (0, 0), (5, 0), (0, 5), (1, 0), (2, 0), (3, 0), (4, 0), (4, 1),
-                    (3, 2), (2, 3), (1, 4), (0, 4), (0, 3), (0, 2), (0, 1), (1, 1),
-                    (3, 1), (1, 3), (2, 1), (2, 2), (1, 2),
-                    ],
-                }[self.order]
+        from gmsh_interop.node_tuples import triangle_data
+        return triangle_data[self.order]["node_tuples"]
 
 
 class GmshTetrahedralElement(GmshSimplexElementBase):
     dimensions = 3
 
+    @property
+    @memoize_method
+    def element_type(self):
+        from gmsh_interop.node_tuples import tetrahedron_data
+        return tetrahedron_data[self.order]["element_type"]
+
     @memoize_method
     def gmsh_node_tuples(self):
-        # gmsh's node ordering is on crack
-        return {
-                1: [(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)],
-                2: [
-                    (0, 0, 0), (2, 0, 0), (0, 2, 0), (0, 0, 2), (1, 0, 0), (1, 1, 0),
-                    (0, 1, 0), (0, 0, 1), (0, 1, 1), (1, 0, 1)],
-                3: [
-                    (0, 0, 0), (3, 0, 0), (0, 3, 0), (0, 0, 3), (1, 0, 0), (2, 0, 0),
-                    (2, 1, 0), (1, 2, 0), (0, 2, 0), (0, 1, 0), (0, 0, 2), (0, 0, 1),
-                    (0, 1, 2), (0, 2, 1), (1, 0, 2), (2, 0, 1), (1, 1, 0), (1, 0, 1),
-                    (0, 1, 1), (1, 1, 1)],
-                4: [
-                    (0, 0, 0), (4, 0, 0), (0, 4, 0), (0, 0, 4), (1, 0, 0), (2, 0, 0),
-                    (3, 0, 0), (3, 1, 0), (2, 2, 0), (1, 3, 0), (0, 3, 0), (0, 2, 0),
-                    (0, 1, 0), (0, 0, 3), (0, 0, 2), (0, 0, 1), (0, 1, 3), (0, 2, 2),
-                    (0, 3, 1), (1, 0, 3), (2, 0, 2), (3, 0, 1), (1, 1, 0), (1, 2, 0),
-                    (2, 1, 0), (1, 0, 1), (2, 0, 1), (1, 0, 2), (0, 1, 1), (0, 1, 2),
-                    (0, 2, 1), (1, 1, 2), (2, 1, 1), (1, 2, 1), (1, 1, 1)],
-                5: [
-                    (0, 0, 0), (5, 0, 0), (0, 5, 0), (0, 0, 5), (1, 0, 0), (2, 0, 0),
-                    (3, 0, 0), (4, 0, 0), (4, 1, 0), (3, 2, 0), (2, 3, 0), (1, 4, 0),
-                    (0, 4, 0), (0, 3, 0), (0, 2, 0), (0, 1, 0), (0, 0, 4), (0, 0, 3),
-                    (0, 0, 2), (0, 0, 1), (0, 1, 4), (0, 2, 3), (0, 3, 2), (0, 4, 1),
-                    (1, 0, 4), (2, 0, 3), (3, 0, 2), (4, 0, 1), (1, 1, 0), (1, 3, 0),
-                    (3, 1, 0), (1, 2, 0), (2, 2, 0), (2, 1, 0), (1, 0, 1), (3, 0, 1),
-                    (1, 0, 3), (2, 0, 1), (2, 0, 2), (1, 0, 2), (0, 1, 1), (0, 1, 3),
-                    (0, 3, 1), (0, 1, 2), (0, 2, 2), (0, 2, 1), (1, 1, 3), (3, 1, 1),
-                    (1, 3, 1), (2, 1, 2), (2, 2, 1), (1, 2, 2), (1, 1, 1), (2, 1, 1),
-                    (1, 2, 1), (1, 1, 2)],
-                }[self.order]
+        from gmsh_interop.node_tuples import tetrahedron_data
+        return tetrahedron_data[self.order]["node_tuples"]
 
 # }}}
 
@@ -329,137 +307,41 @@ class GmshTensorProductElementBase(GmshElementBase):
         of the element. The tuples constituents are non-negative integers
         whose sum is less than or equal to the order of the element.
         """
-        from pytools import \
-                generate_nonnegative_integer_tuples_below
-        result = list(
-                generate_nonnegative_integer_tuples_below(
-                    self.order+1, self.dimensions))
+        from pytools import generate_nonnegative_integer_tuples_below as gnitb
+        result = list(gnitb(self.order + 1, self.dimensions))
 
         assert len(result) == self.node_count()
         return result
-
-    @memoize_method
-    def get_lexicographic_gmsh_node_indices(self):
-        gmsh_tup_to_index = {
-                tup: i
-                for i, tup in enumerate(self.gmsh_node_tuples())}
-
-        return np.array([gmsh_tup_to_index[tup]
-                for tup in self.lexicographic_node_tuples()],
-                dtype=np.intp)
 
 
 class GmshQuadrilateralElement(GmshTensorProductElementBase):
     dimensions = 2
 
+    @property
+    @memoize_method
+    def element_type(self):
+        from gmsh_interop.node_tuples import quadrangle_data
+        return quadrangle_data[self.order]["element_type"]
+
     @memoize_method
     def gmsh_node_tuples(self):
-        # gmsh's node ordering is still on crack
-        return {
-                1: [(0, 0), (0, 1), (1, 1), (1, 0), ],
-                2: [
-                    # start index 0: vertices
-                    (0, 0), (0, 2), (2, 2), (2, 0),
-                    # start index 4: edges
-                    (1, 0), (2, 1), (1, 2), (0, 1),
-                    # start index 8: volume
-                    (1, 1)],
-                3: [
-                    # vertices
-                    (0, 0), (0, 3), (3, 3), (3, 0),
-                    # edges
-                    (1, 0), (2, 0),
-                    (3, 1), (3, 2),
-                    (1, 3), (2, 3),
-                    (0, 1), (0, 2),
-                    # volume
-                    (1, 1), (2, 1),
-                    (1, 2), (2, 2),
-                    ],
-                }[self.order]
+        from gmsh_interop.node_tuples import quadrangle_data
+        return quadrangle_data[self.order]["node_tuples"]
 
 
 class GmshHexahedralElement(GmshTensorProductElementBase):
     dimensions = 3
 
+    @property
+    @memoize_method
+    def element_type(self):
+        from gmsh_interop.node_tuples import hexahedron_data
+        return hexahedron_data[self.order]["element_type"]
+
     @memoize_method
     def gmsh_node_tuples(self):
-        # gmsh's node ordering is always on crack
-
-        # obtained by using the files in
-        # contrib/extract-gmsh-node-order
-        # with gmsh 2.7.1
-
-        return {
-                1: [
-                    (0, 0, 0), (0, 1, 0), (1, 1, 0), (1, 0, 0),
-                    (0, 0, 1), (0, 1, 1), (1, 1, 1), (1, 0, 1),
-                    ],
-
-                2: [
-                    (0, 0, 0), (0, 0, 2), (2, 0, 2), (2, 0, 0),
-                    (0, 2, 0), (0, 2, 2), (2, 2, 2), (2, 2, 0),
-                    (0, 0, 1), (1, 0, 0), (0, 1, 0), (1, 0, 2),
-                    (0, 1, 2), (2, 0, 1), (2, 1, 2), (2, 1, 0),
-                    (0, 2, 1), (1, 2, 0), (1, 2, 2), (2, 2, 1),
-                    (1, 0, 1), (0, 1, 1), (1, 1, 0), (1, 1, 2),
-                    (2, 1, 1), (1, 2, 1), (1, 1, 1),
-                    ],
-
-                3: [
-                    (0, 3, 3), (3, 3, 3), (3, 0, 3), (0, 0, 3),
-                    (0, 3, 0), (3, 3, 0), (3, 0, 0), (0, 0, 0),
-                    (1, 3, 3), (2, 3, 3), (0, 2, 3), (0, 1, 3),
-                    (0, 3, 2), (0, 3, 1), (3, 2, 3), (3, 1, 3),
-                    (3, 3, 2), (3, 3, 1), (2, 0, 3), (1, 0, 3),
-                    (3, 0, 2), (3, 0, 1), (0, 0, 2), (0, 0, 1),
-                    (1, 3, 0), (2, 3, 0), (0, 2, 0), (0, 1, 0),
-                    (3, 2, 0), (3, 1, 0), (2, 0, 0), (1, 0, 0),
-                    (1, 2, 3), (1, 1, 3), (2, 1, 3), (2, 2, 3),
-                    (1, 3, 2), (2, 3, 2), (2, 3, 1), (1, 3, 1),
-                    (0, 2, 2), (0, 2, 1), (0, 1, 1), (0, 1, 2),
-                    (3, 2, 2), (3, 1, 2), (3, 1, 1), (3, 2, 1),
-                    (2, 0, 2), (1, 0, 2), (1, 0, 1), (2, 0, 1),
-                    (1, 2, 0), (2, 2, 0), (2, 1, 0), (1, 1, 0),
-                    (1, 2, 2), (2, 2, 2), (2, 1, 2), (1, 1, 2),
-                    (1, 2, 1), (2, 2, 1), (2, 1, 1), (1, 1, 1),
-                    ],
-                4: [
-                    (4, 0, 0), (4, 4, 0), (0, 4, 0), (0, 0, 0),
-                    (4, 0, 4), (4, 4, 4), (0, 4, 4), (0, 0, 4),
-                    (4, 1, 0), (4, 2, 0), (4, 3, 0), (3, 0, 0),
-                    (2, 0, 0), (1, 0, 0), (4, 0, 1), (4, 0, 2),
-                    (4, 0, 3), (3, 4, 0), (2, 4, 0), (1, 4, 0),
-                    (4, 4, 1), (4, 4, 2), (4, 4, 3), (0, 3, 0),
-                    (0, 2, 0), (0, 1, 0), (0, 4, 1), (0, 4, 2),
-                    (0, 4, 3), (0, 0, 1), (0, 0, 2), (0, 0, 3),
-                    (4, 1, 4), (4, 2, 4), (4, 3, 4), (3, 0, 4),
-                    (2, 0, 4), (1, 0, 4), (3, 4, 4), (2, 4, 4),
-                    (1, 4, 4), (0, 3, 4), (0, 2, 4), (0, 1, 4),
-                    (3, 1, 0), (1, 1, 0), (1, 3, 0), (3, 3, 0),
-                    (2, 1, 0), (1, 2, 0), (2, 3, 0), (3, 2, 0),
-                    (2, 2, 0), (4, 1, 1), (4, 3, 1), (4, 3, 3),
-                    (4, 1, 3), (4, 2, 1), (4, 3, 2), (4, 2, 3),
-                    (4, 1, 2), (4, 2, 2), (3, 0, 1), (3, 0, 3),
-                    (1, 0, 3), (1, 0, 1), (3, 0, 2), (2, 0, 3),
-                    (1, 0, 2), (2, 0, 1), (2, 0, 2), (3, 4, 1),
-                    (1, 4, 1), (1, 4, 3), (3, 4, 3), (2, 4, 1),
-                    (1, 4, 2), (2, 4, 3), (3, 4, 2), (2, 4, 2),
-                    (0, 3, 1), (0, 1, 1), (0, 1, 3), (0, 3, 3),
-                    (0, 2, 1), (0, 1, 2), (0, 2, 3), (0, 3, 2),
-                    (0, 2, 2), (3, 1, 4), (3, 3, 4), (1, 3, 4),
-                    (1, 1, 4), (3, 2, 4), (2, 3, 4), (1, 2, 4),
-                    (2, 1, 4), (2, 2, 4), (3, 1, 1), (3, 3, 1),
-                    (1, 3, 1), (1, 1, 1), (3, 1, 3), (3, 3, 3),
-                    (1, 3, 3), (1, 1, 3), (3, 2, 1), (2, 1, 1),
-                    (3, 1, 2), (2, 3, 1), (3, 3, 2), (1, 2, 1),
-                    (1, 3, 2), (1, 1, 2), (3, 2, 3), (2, 1, 3),
-                    (2, 3, 3), (1, 2, 3), (2, 2, 1), (3, 2, 2),
-                    (2, 1, 2), (2, 3, 2), (1, 2, 2), (2, 2, 3),
-                    (2, 2, 2),
-                    ]
-
-                }[self.order]
+        from gmsh_interop.node_tuples import hexahedron_data
+        return hexahedron_data[self.order]["node_tuples"]
 
 # }}}
 
@@ -467,6 +349,20 @@ class GmshHexahedralElement(GmshTensorProductElementBase):
 
 
 # {{{ receiver interface
+
+def _gmsh_supported_element_type_map():
+    supported_elements = (
+            [GmshPoint(0)]
+            + [GmshIntervalElement(n + 1) for n in range(10)]
+            + [GmshIncompleteTriangularElement(n) for n in [3, 4, 5]]
+            + [GmshTriangularElement(n + 1) for n in range(10)]
+            + [GmshTetrahedralElement(n + 1) for n in range(10)]
+            + [GmshQuadrilateralElement(n + 1) for n in range(10)]
+            + [GmshHexahedralElement(n + 1) for n in range(9)]
+            )
+
+    return {el.element_type: el for el in supported_elements}
+
 
 class GmshMeshReceiverBase:
     """
@@ -481,34 +377,7 @@ class GmshMeshReceiverBase:
     .. automethod:: finalize_tags
     """
 
-    gmsh_element_type_to_info_map = {
-            1:  GmshIntervalElement(1),
-            2:  GmshTriangularElement(1),
-            3:  GmshQuadrilateralElement(1),
-            4:  GmshTetrahedralElement(1),
-            5:  GmshHexahedralElement(1),
-            8:  GmshIntervalElement(2),
-            9:  GmshTriangularElement(2),
-            10: GmshQuadrilateralElement(2),
-            11: GmshTetrahedralElement(2),
-            12: GmshHexahedralElement(2),
-            15: GmshPoint(0),
-            20: GmshIncompleteTriangularElement(3),
-            21: GmshTriangularElement(3),
-            22: GmshIncompleteTriangularElement(4),
-            23: GmshTriangularElement(4),
-            24: GmshIncompleteTriangularElement(5),
-            25: GmshTriangularElement(5),
-            26: GmshIntervalElement(3),
-            27: GmshIntervalElement(4),
-            28: GmshIntervalElement(5),
-            29: GmshTetrahedralElement(3),
-            30: GmshTetrahedralElement(4),
-            31: GmshTetrahedralElement(5),
-            36: GmshQuadrilateralElement(3),
-            92: GmshHexahedralElement(3),
-            93: GmshHexahedralElement(4),
-            }
+    gmsh_element_type_to_info_map = _gmsh_supported_element_type_map()
 
     def set_up_nodes(self, count):
         pass
