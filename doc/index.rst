@@ -16,6 +16,8 @@ This package contains:
     reader
     runner
     misc
+    🚀 Github <https://github.com/inducer/gmsh_interop>
+    💾 Download Releases <https://pypi.org/project/gmsh_interop>
 
 
 Indices and tables
