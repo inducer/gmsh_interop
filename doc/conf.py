@@ -36,6 +36,7 @@ release = ver_dic["VERSION_TEXT"]
 extensions = [
         "sphinx.ext.autodoc",
         "sphinx.ext.intersphinx",
+        "sphinx_copybutton",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -52,7 +53,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "alabaster"
+html_theme = "furo"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -60,16 +61,12 @@ html_theme = "alabaster"
 html_static_path = ["_static"]
 
 html_theme_options = {
-        "extra_nav_links": {
-            "🚀 Github": "https://github.com/inducer/gmsh_interop",
-            "💾 Download Releases": "https://pypi.org/project/gmsh_interop",
-            }
         }
 
 autoclass_content = "class"
 
 intersphinx_mapping = {
         "https://docs.python.org/dev": None,
-        "https://docs.scipy.org/doc/numpy/": None,
+        "https://numpy.org/doc/stable/": None,
         "https://documen.tician.de/meshpy": None,
         }
