@@ -493,7 +493,7 @@ def read_gmsh(receiver, filename, force_dimension=None):
     return result
 
 
-def generate_gmsh(receiver, source, dimensions=None, order=None, other_options=[],
+def generate_gmsh(receiver, source, dimensions=None, order=None, other_options=(),
             extension="geo", gmsh_executable="gmsh", force_dimension=None,
             output_file_name=None, save_tmp_files_in=None):
     """Run gmsh and feed the output to *receiver*.
