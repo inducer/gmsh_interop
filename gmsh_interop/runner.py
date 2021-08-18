@@ -119,7 +119,7 @@ class ScriptWithFilesSource:
 
 class GmshRunner:
     def __init__(self, source, dimensions=None, order=None,
-            incomplete_elements=None, other_options=[],
+            incomplete_elements=None, other_options=(),
             extension="geo", gmsh_executable="gmsh",
             output_file_name=None,
             target_unit=None,
