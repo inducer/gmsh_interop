@@ -207,28 +207,31 @@ class GmshRunner:
                 raise RuntimeError("'source' type unrecognized")
 
             # gmsh uses a "~/.gmsh-tmp" by default as a temporary file name.
-            # This is not ideal for, say concurrent tests.
-            from tempfile import NamedTemporaryFile
-            with NamedTemporaryFile(delete=False) as tmpf:
-                gmsh_tmp_name = tmpf.name
+            # Unfortunately, GMSH also automatically prepends the home
+            # directory to this.
+            import tempfile
+            from os.path import basename, expanduser
+            with tempfile.NamedTemporaryFile(
+                    delete=False, dir=expanduser("~")) as tmpf:
+                gmsh_tmp_name = basename(tmpf.name)
 
             output_file_name = join(working_dir, self.output_file_name)
             cmdline = [
                     self.gmsh_executable,
+                    "-setstring", "General.TmpFileName", gmsh_tmp_name,
                     "-o", self.output_file_name,
                     "-nopopup",
                     "-format", "msh2",
-                    "-string", f'General.TmpFileName = "{gmsh_tmp_name}";'
                     ]
 
             # NOTE: handle unit incompatibility introduced in GMSH4
             # https://gitlab.onelab.info/gmsh/gmsh/issues/397
             if self.version < "4.0.0":
                 if self.target_unit == "M":
-                    cmdline.extend(["-string", "Geometry.OCCScaling=1000;"])
+                    cmdline.extend(["-setnumber", "Geometry.OCCScaling", "1000"])
             else:
-                cmdline.extend(["-string",
-                    f"Geometry.OCCTargetUnit='{self.target_unit}';"])
+                cmdline.extend(["-setstring",
+                    "Geometry.OCCTargetUnit", self.target_unit])
 
             if self.dimensions is not None:
                 cmdline.append(f"-{self.dimensions}")
@@ -237,8 +240,8 @@ class GmshRunner:
                 cmdline.extend(["-order", str(self.order)])
 
             if self.incomplete_elements is not None:
-                cmdline.extend(["-string",
-                    f"Mesh.SecondOrderIncomplete = {self.incomplete_elements};"])
+                cmdline.extend(["-setstring",
+                    "Mesh.SecondOrderIncomplete", self.incomplete_elements])
 
             cmdline.extend(self.other_options)
             cmdline.append(source_file_name)
