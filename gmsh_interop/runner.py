@@ -206,12 +206,20 @@ class GmshRunner:
             else:
                 raise RuntimeError("'source' type unrecognized")
 
+            # gmsh uses a "~/.gmsh-tmp" by default as a temporary file name.
+            # This is not ideal for, say concurrent tests.
+            from tempfile import NamedTemporaryFile
+            with NamedTemporaryFile(delete=False) as tmpf:
+                gmsh_tmp_name = tmpf.name
+
             output_file_name = join(working_dir, self.output_file_name)
             cmdline = [
                     self.gmsh_executable,
                     "-o", self.output_file_name,
                     "-nopopup",
-                    "-format", "msh2"]
+                    "-format", "msh2",
+                    "-string", f'General.TmpFileName = "{gmsh_tmp_name}";'
+                    ]
 
             # NOTE: handle unit incompatibility introduced in GMSH4
             # https://gitlab.onelab.info/gmsh/gmsh/issues/397
