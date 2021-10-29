@@ -20,7 +20,7 @@ jobs:
                 python-version: '3.6'
         -   name: "Main Script"
             run: |
-                curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/prepare-and-run-flake8.sh
+                curl -L -O https://gitlab.tiker.net/inducer/ci-support/raw/main/prepare-and-run-flake8.sh
                 . ./prepare-and-run-flake8.sh ./gmsh_interop ./test
 
     pytest3:
@@ -31,7 +31,7 @@ jobs:
         -   name: "Main Script"
             run: |
                 CONDA_ENVIRONMENT=.test-conda-env-py3.yml
-                curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/build-and-test-py-project-within-miniconda.sh
+                curl -L -O https://gitlab.tiker.net/inducer/ci-support/raw/main/build-and-test-py-project-within-miniconda.sh
                 . ./build-and-test-py-project-within-miniconda.sh
 
     docs:
@@ -42,8 +42,8 @@ jobs:
         -   name: "Main Script"
             run: |
                 CONDA_ENVIRONMENT=.test-conda-env-py3.yml
-                curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/ci-support.sh
-                . ci-support.sh
+                curl -L -O https://tiker.net/ci-support-v0
+                . ci-support-v0
                 build_py_project_in_conda_env
                 build_docs
 
@@ -59,11 +59,14 @@ jobs:
             env:
                 DOWNSTREAM_PROJECT: ${{ matrix.downstream_project }}
             run: |
+                curl -L -O https://tiker.net/ci-support-v0
+                . ./ci-support-v0
+
                 git clone "https://github.com/inducer/$DOWNSTREAM_PROJECT.git"
                 cd "$DOWNSTREAM_PROJECT"
                 echo "*** $DOWNSTREAM_PROJECT version: $(git rev-parse --short HEAD)"
 
-                sed -i "/egg=gmsh_interop/ c git+file://$(readlink -f ..)#egg=gmsh_interop" requirements.txt
+                edit_requirements_txt_for_downstream_in_subdir
 
                 export CONDA_ENVIRONMENT=.test-conda-env-py3.yml
 
@@ -72,8 +75,6 @@ jobs:
 
                 sed -i "/mpi4py/ d" requirements.txt
 
-                curl -L -O -k https://tiker.net/ci-support-v0
-                . ./ci-support-v0
                 build_py_project_in_conda_env
                 test_py_project
 
