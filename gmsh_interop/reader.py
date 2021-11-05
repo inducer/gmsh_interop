@@ -558,9 +558,18 @@ def parse_gmsh(receiver, line_iterable, force_dimension=None):
                     raise GmshFileFormatError(
                             "more than one line found in MeshFormat section")
 
+                if not version_number.startswith("2."):
+                    # https://github.com/inducer/gmsh_interop/issues/18
+                    raise NotImplementedError(
+                        f"Unsupported mesh version number '{version_number}' "
+                        "found. Convert your mesh to a v2.x mesh using "
+                        "'gmsh your_msh.msh -save -format msh2 -o your_msh-v2.msh'")
+
                 if version_number not in ["2.1", "2.2"]:
                     from warnings import warn
-                    warn("unexpected mesh version number '{version_number}' found")
+                    warn(
+                            f"unexpected mesh version number '{version_number}' "
+                            "found, continuing")
 
                 if file_type != "0":
                     raise GmshFileFormatError(
