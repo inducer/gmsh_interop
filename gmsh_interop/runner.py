@@ -169,9 +169,14 @@ class GmshRunner:
         from pytools.prefork import call_capture_output
         retcode, stdout, stderr = call_capture_output(cmdline)
 
+        if stderr:
+            output = stderr.decode().strip()
+        else:
+            output = stdout.decode().strip()
+
         # stderr can contain irregular info
         import re
-        version = re.search(r"[0-9]+.[0-9]+.[0-9]+", stderr.decode().strip()).group()
+        version = re.search(r"[0-9]+.[0-9]+.[0-9]+", output).group()
         return LooseVersion(version)
 
     def __enter__(self):
