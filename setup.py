@@ -37,6 +37,7 @@ setup(name="gmsh_interop",
       install_requires=[
           "numpy>=1.6.0",
           "pytools",
+          "packaging>=20.0",
           ],
 
       author="Andreas Kloeckner",

@@ -23,6 +23,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+try:
+    from packaging.version import parse as LooseVersion     # noqa: N812
+except ImportError:
+    from distutils.version import LooseVersion
+
 from pytools import memoize_method
 
 import logging
@@ -160,7 +165,6 @@ class GmshRunner:
     @property
     @memoize_method
     def version(self):
-        from distutils.version import LooseVersion
         cmdline = [
                 self.gmsh_executable,
                 "-version"
@@ -231,7 +235,7 @@ class GmshRunner:
 
             # NOTE: handle unit incompatibility introduced in GMSH4
             # https://gitlab.onelab.info/gmsh/gmsh/issues/397
-            if self.version < "4.0.0":
+            if self.version < LooseVersion("4.0.0"):
                 if self.target_unit == "M":
                     cmdline.extend(["-setnumber", "Geometry.OCCScaling", "1000"])
             else:
