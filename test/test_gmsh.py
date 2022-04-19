@@ -115,7 +115,7 @@ def test_simplex_gmsh(dim, order, visualize=False):
 
     mr = GmshMeshReceiverBase()
     source = ScriptSource(GMSH_SPHERE, "geo")
-    generate_gmsh(mr, source, dimensions=dim, order=order,
+    generate_gmsh(mr, source, dimensions=dim, order=order, target_unit="MM",
             save_tmp_files_in=save_tmp_files_in)
 
 
