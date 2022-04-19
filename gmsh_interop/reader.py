@@ -25,7 +25,7 @@ THE SOFTWARE.
 
 import numpy as np
 
-from pytools import memoize_method, Record
+from pytools import memoize_method
 from gmsh_interop.runner import (  # noqa
         ScriptSource, LiteralSource, FileSource, ScriptWithFilesSource)
 
@@ -531,9 +531,6 @@ def parse_gmsh(receiver, line_iterable, force_dimension=None):
     feeder = LineFeeder(line_iterable)
 
     # collect the mesh information
-
-    class ElementInfo(Record):
-        pass
 
     while feeder.has_next_line():
         next_line = feeder.get_next_line()
