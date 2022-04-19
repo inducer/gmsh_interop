@@ -23,10 +23,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from functools import reduce
-
 import numpy as np
-#import numpy.linalg as la
+
 from pytools import memoize_method, Record
 from gmsh_interop.runner import (  # noqa
         ScriptSource, LiteralSource, FileSource, ScriptWithFilesSource)
@@ -195,11 +193,12 @@ class GmshSimplexElementBase(GmshElementBase):
     @memoize_method
     def node_count(self):
         """Return the number of interpolation nodes in this element."""
-        d = self.dimensions
-        o = self.order
+        import math
         from operator import mul
-        from pytools import factorial
-        return int(reduce(mul, (o + 1 + i for i in range(d)), 1) / factorial(d))
+        from functools import reduce
+        return (
+                reduce(mul, (self.order + 1 + i for i in range(self.dimensions)), 1)
+                // math.factorial(self.dimensions))
 
     @memoize_method
     def lexicographic_node_tuples(self):
