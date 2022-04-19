@@ -26,7 +26,7 @@ THE SOFTWARE.
 import numpy as np
 
 from pytools import memoize_method
-from gmsh_interop.runner import (  # noqa
+from gmsh_interop.runner import (  # noqa: F401
         ScriptSource, LiteralSource, FileSource, ScriptWithFilesSource)
 
 
@@ -494,7 +494,7 @@ def read_gmsh(receiver, filename, force_dimension=None):
 
 def generate_gmsh(receiver, source, dimensions=None, order=None, other_options=(),
             extension="geo", gmsh_executable="gmsh", force_dimension=None,
-            output_file_name=None, save_tmp_files_in=None):
+            target_unit=None, output_file_name=None, save_tmp_files_in=None):
     """Run gmsh and feed the output to *receiver*.
 
     :arg receiver: a class that implements the :class:`GmshMeshReceiverBase`
@@ -505,6 +505,7 @@ def generate_gmsh(receiver, source, dimensions=None, order=None, other_options=(
     runner = GmshRunner(source, dimensions, order=order,
             other_options=other_options, extension=extension,
             gmsh_executable=gmsh_executable,
+            target_unit=target_unit,
             output_file_name=output_file_name,
             save_tmp_files_in=save_tmp_files_in)
 
