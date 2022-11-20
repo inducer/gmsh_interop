@@ -33,7 +33,7 @@ setup(name="gmsh_interop",
           "Topic :: Utilities",
           ],
 
-      python_requires="~=3.6",
+      python_requires="~=3.8",
       install_requires=[
           "numpy>=1.6.0",
           "pytools",
