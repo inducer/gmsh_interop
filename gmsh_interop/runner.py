@@ -24,11 +24,12 @@ THE SOFTWARE.
 """
 
 try:
-    from packaging.version import parse as LooseVersion  # noqa: N812
+    from packaging.version import Version
 except ImportError:
-    from distutils.version import LooseVersion
+    from distutils.version import Version
 
 import logging
+from typing import Optional
 
 from pytools import memoize_method
 
@@ -124,6 +125,33 @@ class ScriptWithFilesSource:
         self.filenames = filenames
 
 
+def get_gmsh_version(executable: str = "gmsh") -> Optional[Version]:
+    import re
+    re_version = re.compile(r"[0-9]+.[0-9]+.[0-9]+")
+
+    def get_gmsh_version_from_string(output: str) -> Optional[Version]:
+        result = re_version.search(output)
+
+        try_version = None
+        if result is not None:
+            try_version = Version(result.group())
+
+        return try_version
+
+    from pytools.prefork import call_capture_output
+    retcode, stdout, stderr = call_capture_output([executable, "-version"])
+
+    # NOTE: gmsh has changed how it displays its version over the years, with
+    # it being displayed both on stderr and stdout -- so we try to cover it all!
+    version = None
+    if retcode == 0:
+        version = get_gmsh_version_from_string(stdout.decode().strip())
+        if version is None:
+            version = get_gmsh_version_from_string(stderr.decode().strip())
+
+    return version
+
+
 class GmshRunner:
     def __init__(self, source, dimensions=None, order=None,
             incomplete_elements=None, other_options=(),
@@ -167,23 +195,11 @@ class GmshRunner:
     @property
     @memoize_method
     def version(self):
-        cmdline = [
-                self.gmsh_executable,
-                "-version"
-                ]
+        result = get_gmsh_version(self.gmsh_executable)
+        if result is None:
+            raise AttributeError("version")
 
-        from pytools.prefork import call_capture_output
-        retcode, stdout, stderr = call_capture_output(cmdline)
-
-        if stderr:
-            output = stderr.decode().strip()
-        else:
-            output = stdout.decode().strip()
-
-        # stderr can contain irregular info
-        import re
-        version = re.search(r"[0-9]+.[0-9]+.[0-9]+", output).group()
-        return LooseVersion(version)
+        return result
 
     def __enter__(self):
         self.temp_dir_mgr = None
@@ -237,7 +253,7 @@ class GmshRunner:
 
             # NOTE: handle unit incompatibility introduced in GMSH4
             # https://gitlab.onelab.info/gmsh/gmsh/issues/397
-            if self.version < LooseVersion("4.0.0"):
+            if self.version < Version("4.0.0"):
                 if self.target_unit == "M":
                     cmdline.extend(["-setnumber", "Geometry.OCCScaling", "1000"])
             else:
