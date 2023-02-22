@@ -26,8 +26,9 @@ THE SOFTWARE.
 import numpy as np
 
 from pytools import memoize_method
+
 from gmsh_interop.runner import (  # noqa: F401
-        ScriptSource, LiteralSource, FileSource, ScriptWithFilesSource)
+    FileSource, LiteralSource, ScriptSource, ScriptWithFilesSource)
 
 
 __doc__ = """
@@ -102,8 +103,7 @@ def generate_triangle_volume_tuples(order):
 
 
 def generate_quad_vertex_tuples(dim, order):
-    from pytools import \
-            generate_nonnegative_integer_tuples_below
+    from pytools import generate_nonnegative_integer_tuples_below
     for tup in generate_nonnegative_integer_tuples_below(2, dim):
         yield tuple(order * i for i in tup)
 
@@ -194,16 +194,16 @@ class GmshSimplexElementBase(GmshElementBase):
     def node_count(self):
         """Return the number of interpolation nodes in this element."""
         import math
-        from operator import mul
         from functools import reduce
+        from operator import mul
         return (
                 reduce(mul, (self.order + 1 + i for i in range(self.dimensions)), 1)
                 // math.factorial(self.dimensions))
 
     @memoize_method
     def lexicographic_node_tuples(self):
-        from pytools import \
-                generate_nonnegative_integer_tuples_summing_to_at_most as gnitstam
+        from pytools import (
+            generate_nonnegative_integer_tuples_summing_to_at_most as gnitstam)
         result = list(gnitstam(self.order, self.dimensions))
 
         assert len(result) == self.node_count()
