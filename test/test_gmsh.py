@@ -29,8 +29,8 @@ def search_on_path(filenames):
     """Find file on system path."""
     # http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/52224
 
-    from os.path import exists, abspath, join
-    from os import pathsep, environ
+    from os import environ, pathsep
+    from os.path import abspath, exists, join
 
     search_path = environ["PATH"]
 
@@ -110,7 +110,7 @@ def test_simplex_gmsh(dim, order, visualize=False):
     else:
         save_tmp_files_in = None
 
-    from gmsh_interop.reader import generate_gmsh, GmshMeshReceiverBase
+    from gmsh_interop.reader import GmshMeshReceiverBase, generate_gmsh
     from gmsh_interop.runner import ScriptSource
 
     mr = GmshMeshReceiverBase()
@@ -130,7 +130,7 @@ def test_quad_gmsh(dim, order, visualize=False):
     else:
         save_tmp_files_in = None
 
-    from gmsh_interop.reader import generate_gmsh, GmshMeshReceiverBase
+    from gmsh_interop.reader import GmshMeshReceiverBase, generate_gmsh
     from gmsh_interop.runner import ScriptSource
 
     if dim == 2:

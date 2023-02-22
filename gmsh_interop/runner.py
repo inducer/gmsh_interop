@@ -24,13 +24,15 @@ THE SOFTWARE.
 """
 
 try:
-    from packaging.version import parse as LooseVersion     # noqa: N812
+    from packaging.version import parse as LooseVersion  # noqa: N812
 except ImportError:
     from distutils.version import LooseVersion
 
+import logging
+
 from pytools import memoize_method
 
-import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -51,7 +53,7 @@ class GmshError(RuntimeError):
 # {{{ tools
 
 def _erase_dir(dir):
-    from os import listdir, unlink, rmdir
+    from os import listdir, rmdir, unlink
     from os.path import join
     for name in listdir(dir):
         unlink(join(dir, name))
@@ -188,7 +190,7 @@ class GmshRunner:
         temp_dir_mgr = _TempDirManager()
         try:
             working_dir = temp_dir_mgr.path
-            from os.path import join, abspath, exists
+            from os.path import abspath, exists, join
 
             if isinstance(self.source, ScriptSource):
                 source_file_name = join(
@@ -300,8 +302,8 @@ class GmshRunner:
             self.output_file = open(output_file_name)
 
             if self.save_tmp_files_in:
-                import shutil
                 import errno
+                import shutil
                 try:
                     shutil.copytree(working_dir, self.save_tmp_files_in)
                 except FileExistsError:
