@@ -16,7 +16,7 @@ version = ".".join(str(x) for x in ver_dic["VERSION"])
 release = ver_dic["VERSION_TEXT"]
 
 intersphinx_mapping = {
-        "https://docs.python.org/dev": None,
-        "https://numpy.org/doc/stable/": None,
-        "https://documen.tician.de/meshpy": None,
+        "python": ("https://docs.python.org/dev", None),
+        "numpy":("https://numpy.org/doc/stable/", None),
+        "meshpy": ("https://documen.tician.de/meshpy", None),
         }
