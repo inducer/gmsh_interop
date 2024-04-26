@@ -10,6 +10,9 @@ Interoperability between Python and Gmsh
 .. image:: https://badge.fury.io/py/gmsh_interop.png
     :alt: Python Package Index Release Page
     :target: https://pypi.org/project/gmsh_interop/
+.. image:: https://zenodo.org/badge/113488057.svg
+   :alt: Zenodo DOI for latest release
+   :target: https://zenodo.org/doi/10.5281/zenodo.11075135
 
 This package allows Python to interoperate with the `gmsh <http://gmsh.info/>`_
 mesh generator.

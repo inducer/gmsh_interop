@@ -13,6 +13,7 @@ authors:
 
 title: "gmsh_interop"
 version: 2024.1
+doi: 10.5281/zenodo.11075136
 date-released: 2024-04-26
 url: "https://github.com/inducer/gmsh_interop"
 license: MIT
