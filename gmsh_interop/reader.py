@@ -307,7 +307,11 @@ class GmshTensorProductElementBase(GmshElementBase):
         whose sum is less than or equal to the order of the element.
         """
         from pytools import generate_nonnegative_integer_tuples_below as gnitb
-        result = list(gnitb(self.order + 1, self.dimensions))
+
+        # gnitb(2, 2) gives [(0, 0), (0, 1), (1, 0), (1, 1)]
+        # We want the x-coordinate to increase first, so reverse.
+        # (This is also consistent with gnitstam.)
+        result = [tup[::-1] for tup in gnitb(self.order + 1, self.dimensions)]
 
         assert len(result) == self.node_count()
         return result
@@ -528,7 +532,6 @@ def parse_gmsh(receiver, line_iterable, force_dimension=None):
     :arg force_dimension: if not *None*, truncate point coordinates to this
         many dimensions.
     """
-
     feeder = LineFeeder(line_iterable)
 
     # collect the mesh information
