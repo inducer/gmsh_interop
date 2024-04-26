@@ -145,6 +145,24 @@ def test_quad_gmsh(dim, order, visualize=False):
 # }}}
 
 
+def test_lex_node_ordering():
+    """Check that lex nodes go through axes 'in order', i.e. that the
+    r-axis is the first one to become non-zero, then s, then t.
+    """
+    from gmsh_interop.reader import _gmsh_supported_element_type_map
+
+    for el in _gmsh_supported_element_type_map().values():
+        axis_nonzero_order = []
+
+        for node in el.lexicographic_node_tuples():
+            nonzero_axes = {i for i, ni in enumerate(node) if ni}
+            for nzax in sorted(nonzero_axes):
+                if nzax not in axis_nonzero_order:
+                    axis_nonzero_order.append(nzax)
+
+        assert axis_nonzero_order == list(range(el.dimensions))
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
