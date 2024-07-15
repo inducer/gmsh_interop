@@ -50,3 +50,41 @@ Homepage = "https://github.com/inducer/gmsh_interop"
 include = [
     "gmsh_interop*",
 ]
+
+[tool.ruff]
+preview = true
+
+[tool.ruff.lint]
+extend-select = [
+    "B",    # flake8-bugbear
+    "C",    # flake8-comprehensions
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "G",    # flake8-logging-format
+    "I",    # flake8-isort
+    "N",    # pep8-naming
+    "Q",    # flake8-quotes
+    "RUF",  # ruff
+    "UP",   # pyupgrade
+    "W",    # pycodestyle
+]
+extend-ignore = [
+    "C90",  # McCabe complexity
+    "E226", # missing whitespace around arithmetic operator
+    "E241", # multiple spaces after comma
+    "E242", # tab after comma
+    "E402", # module level import not at the top of file
+    "UP031", # use f-strings instead of %
+    "UP032", # use f-strings instead of .format
+]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "double"
+docstring-quotes = "double"
+multiline-quotes = "double"
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+known-first-party = ["pytools"]
+known-local-folder = ["gmsh_interop"]
+lines-after-imports = 2

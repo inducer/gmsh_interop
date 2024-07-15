@@ -28,7 +28,11 @@ import numpy as np
 from pytools import memoize_method
 
 from gmsh_interop.runner import (  # noqa: F401
-    FileSource, LiteralSource, ScriptSource, ScriptWithFilesSource)
+    FileSource,
+    LiteralSource,
+    ScriptSource,
+    ScriptWithFilesSource,
+)
 
 
 __doc__ = """
@@ -203,7 +207,8 @@ class GmshSimplexElementBase(GmshElementBase):
     @memoize_method
     def lexicographic_node_tuples(self):
         from pytools import (
-            generate_nonnegative_integer_tuples_summing_to_at_most as gnitstam)
+            generate_nonnegative_integer_tuples_summing_to_at_most as gnitstam,
+        )
         result = list(gnitstam(self.order, self.dimensions))
 
         assert len(result) == self.node_count()
