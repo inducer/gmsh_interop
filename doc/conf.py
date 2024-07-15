@@ -1,3 +1,4 @@
+from importlib import metadata
 from urllib.request import urlopen
 
 
@@ -6,15 +7,10 @@ _conf_url = \
 with urlopen(_conf_url) as _inf:
     exec(compile(_inf.read(), _conf_url, "exec"), globals())
 
-copyright = "2020-21, Andreas Klöckner"
 author = "Andreas Klöckner"
-
-ver_dic = {}
-exec(compile(
-    open("../gmsh_interop/version.py").read(),
-    "../gmsh_interop/version.py", "exec"), ver_dic)
-version = ".".join(str(x) for x in ver_dic["VERSION"])
-release = ver_dic["VERSION_TEXT"]
+copyright = "2020-24, Andreas Klöckner"
+release = metadata.version("gmsh_interop")
+version = ".".join(release.split(".")[:2])
 
 intersphinx_mapping = {
         "python": ("https://docs.python.org/dev", None),
