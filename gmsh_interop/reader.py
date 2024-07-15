@@ -137,7 +137,7 @@ class LineFeeder:
         try:
             nl = next(self.line_iterable)
         except StopIteration:
-            raise GmshFileFormatError("unexpected end of file")
+            raise GmshFileFormatError("unexpected end of file") from None
         else:
             return nl.strip()
 
@@ -557,7 +557,7 @@ def parse_gmsh(receiver, line_iterable, force_dimension=None):
                     break
 
                 if line_count == 0:
-                    version_number, file_type, data_size = next_line.split()
+                    version_number, file_type, _data_size = next_line.split()
 
                 if line_count > 0:
                     raise GmshFileFormatError(
@@ -572,9 +572,8 @@ def parse_gmsh(receiver, line_iterable, force_dimension=None):
 
                 if version_number not in ["2.1", "2.2"]:
                     from warnings import warn
-                    warn(
-                            f"unexpected mesh version number '{version_number}' "
-                            "found, continuing")
+                    warn(f"unexpected mesh version number '{version_number}' "
+                         "found, continuing", stacklevel=2)
 
                 if file_type != "0":
                     raise GmshFileFormatError(
@@ -643,7 +642,8 @@ def parse_gmsh(receiver, line_iterable, force_dimension=None):
                             receiver.gmsh_element_type_to_info_map[el_type_num]
                 except KeyError:
                     raise GmshFileFormatError(
-                            f"unexpected element type: {el_type_num}")
+                            f"unexpected element type: {el_type_num}"
+                            ) from None
 
                 tag_count = parts[2]
                 tags = parts[3:3+tag_count]
@@ -702,7 +702,9 @@ def parse_gmsh(receiver, line_iterable, force_dimension=None):
         else:
             # unrecognized section, skip
             from warnings import warn
-            warn(f"unrecognized section '{section_name}' in gmsh file")
+            warn(f"unrecognized section '{section_name}' in gmsh file",
+                 stacklevel=2)
+
             while True:
                 next_line = feeder.get_next_line()
                 if next_line == "$End"+section_name:

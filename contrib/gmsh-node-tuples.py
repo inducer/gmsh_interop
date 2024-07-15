@@ -73,8 +73,8 @@ HEXAHEHEDRON_ELEMENTS = {
 def generate_node_tuples_from_gmsh(eltype, eldim, elvertices, domain="unit"):
     # {{{ get element
 
-    name, dim, order, nnodes, nodes, nvertices = \
-            gmsh.model.mesh.getElementProperties(eltype)
+    _name, dim, order, nnodes, nodes, nvertices = (
+            gmsh.model.mesh.getElementProperties(eltype))
     assert dim == eldim
     assert nvertices == elvertices
 

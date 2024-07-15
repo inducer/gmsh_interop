@@ -161,9 +161,9 @@ class GmshRunner:
             save_tmp_files_in=None):
         if isinstance(source, str):
             from warnings import warn
-            warn("passing a string as 'source' is deprecated--use "
-                    "one of the *Source classes",
-                    DeprecationWarning)
+            warn("passing a string as 'source' is deprecated -- use "
+                 "one of the *Source classes",
+                 DeprecationWarning, stacklevel=2)
 
             source = ScriptSource(source, extension)
 
@@ -278,8 +278,8 @@ class GmshRunner:
 
             logger.info("invoking gmsh: '%s'", " ".join(cmdline))
             from pytools.prefork import call_capture_output
-            retcode, stdout, stderr = call_capture_output(
-                    cmdline, working_dir)
+
+            _retcode, stdout, stderr = call_capture_output(cmdline, working_dir)
             logger.info("return from gmsh")
 
             stdout = stdout.decode("utf-8")
@@ -313,7 +313,7 @@ class GmshRunner:
                 if stdout:
                     msg += stdout+"\n"
                 msg += stderr+"\n"
-                warn(msg)
+                warn(msg, stacklevel=2)
 
             self.output_file = open(output_file_name)
 
@@ -329,7 +329,7 @@ class GmshRunner:
                         "Overwrite? (Y/N, will default to Y in 10sec).")
                     decision = None
                     while decision is None:
-                        i, o, e = select.select([sys.stdin], [], [], 10)
+                        i, _o, _e = select.select([sys.stdin], [], [], 10)
                         if i:
                             resp = sys.stdin.readline().strip()
                             if resp == "N" or resp == "n":
