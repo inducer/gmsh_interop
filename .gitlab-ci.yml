@@ -1,29 +1,29 @@
 Ruff:
-  script: |
-    pipx install ruff
-    ruff check
-  tags:
-  - docker-runner
-  except:
-  - tags
+    script: |
+        pipx install ruff
+        ruff check
+    tags:
+        - docker-runner
+    except:
+        - tags
 
 Python 3:
-  script:
-  - py_version=3
-  - export EXTRA_INSTALL="numpy"
-  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/build-and-test-py-project.sh
-  - ". ./build-and-test-py-project.sh"
-  tags:
-  - python3
-  except:
-  - tags
-  artifacts:
-    reports:
-      junit: test/pytest.xml
+    script: |
+        py_version=3
+        export EXTRA_INSTALL="numpy"
+        curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/build-and-test-py-project.sh
+        . ./build-and-test-py-project.sh
+    tags:
+        - python3
+    except:
+        - tags
+    artifacts:
+        reports:
+            junit: test/pytest.xml
 
 Documentation:
-  script:
-  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/build-docs.sh
-  - ". ./build-docs.sh"
-  tags:
-  - python3
+    script: |
+        curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/build-docs.sh
+        . ./build-docs.sh
+    tags:
+        - python3
