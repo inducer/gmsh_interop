@@ -23,13 +23,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-try:
-    from packaging.version import Version
-except ImportError:
-    from distutils.version import Version
-
 import logging
-from typing import Optional
+
+from packaging.version import Version
 
 from pytools import memoize_method
 
@@ -125,11 +121,11 @@ class ScriptWithFilesSource:
         self.filenames = filenames
 
 
-def get_gmsh_version(executable: str = "gmsh") -> Optional[Version]:
+def get_gmsh_version(executable: str = "gmsh") -> Version | None:
     import re
     re_version = re.compile(r"[0-9]+.[0-9]+.[0-9]+")
 
-    def get_gmsh_version_from_string(output: str) -> Optional[Version]:
+    def get_gmsh_version_from_string(output: str) -> Version | None:
         result = re_version.search(output)
 
         try_version = None
