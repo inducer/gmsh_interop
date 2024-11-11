@@ -73,5 +73,3 @@ jobs:
 
                 build_py_project_in_conda_env
                 test_py_project
-
-# vim: sw=4
