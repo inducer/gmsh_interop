@@ -24,6 +24,9 @@ THE SOFTWARE.
 """
 
 import logging
+from collections.abc import Iterable
+from types import TracebackType
+from typing import Literal
 
 from packaging.version import Version
 
@@ -49,27 +52,28 @@ class GmshError(RuntimeError):
 
 # {{{ tools
 
-def _erase_dir(dir):
+def _erase_dir(dir: str) -> None:
     from os import listdir, rmdir, unlink
     from os.path import join
+
     for name in listdir(dir):
         unlink(join(dir, name))
     rmdir(dir)
 
 
 class _TempDirManager:
-    def __init__(self):
+    def __init__(self) -> None:
         from tempfile import mkdtemp
         self.path = mkdtemp()
 
-    def sub(self, n):
+    def sub(self, n: str) -> str:
         from os.path import join
         return join(self.path, n)
 
-    def clean_up(self):
+    def clean_up(self) -> None:
         _erase_dir(self.path)
 
-    def error_clean_up(self):
+    def error_clean_up(self) -> None:
         _erase_dir(self.path)
 
 
@@ -77,7 +81,7 @@ class ScriptSource:
     """
     .. versionadded:: 2016.1
     """
-    def __init__(self, source, extension):
+    def __init__(self, source: str, extension: str) -> None:
         self.source = source
         self.extension = extension
 
@@ -86,19 +90,21 @@ class LiteralSource(ScriptSource):
     """
     .. versionadded:: 2014.1
     """
-    def __init__(self, source, extension):
+
+    def __init__(self, source: str, extension: str) -> None:
         super().__init__(source, extension)
 
         from warnings import warn
         warn("LiteralSource is deprecated, use ScriptSource instead",
-                DeprecationWarning, stacklevel=2)
+             DeprecationWarning, stacklevel=2)
 
 
 class FileSource:
     """
     .. versionadded:: 2014.1
     """
-    def __init__(self, filename):
+
+    def __init__(self, filename: str) -> None:
         self.filename = filename
 
 
@@ -115,10 +121,14 @@ class ScriptWithFilesSource:
         The names of files to be copied to the temporary directory where
         gmsh is run.
     """
-    def __init__(self, source, filenames, source_name="temp.geo"):
+
+    def __init__(self,
+                 source: str,
+                 filenames: Iterable[str],
+                 source_name: str = "temp.geo") -> None:
         self.source = source
         self.source_name = source_name
-        self.filenames = filenames
+        self.filenames = tuple(filenames)
 
 
 def get_gmsh_version(executable: str = "gmsh") -> Version | None:
@@ -149,12 +159,18 @@ def get_gmsh_version(executable: str = "gmsh") -> Version | None:
 
 
 class GmshRunner:
-    def __init__(self, source, dimensions=None, order=None,
-            incomplete_elements=None, other_options=(),
-            extension="geo", gmsh_executable="gmsh",
-            output_file_name=None,
-            target_unit=None,
-            save_tmp_files_in=None):
+    def __init__(
+            self,
+            source: str | ScriptSource | FileSource | ScriptWithFilesSource,
+            dimensions: int | None = None,
+            order: int | None = None,
+            incomplete_elements: bool | None = None,
+            other_options: tuple[str, ...] = (),
+            extension: str = "geo",
+            gmsh_executable: str = "gmsh",
+            output_file_name: str | None = None,
+            target_unit: Literal["M", "MM"] | None = None,
+            save_tmp_files_in: str | None = None) -> None:
         if isinstance(source, str):
             from warnings import warn
             warn("passing a string as 'source' is deprecated -- use "
@@ -190,14 +206,14 @@ class GmshRunner:
 
     @property
     @memoize_method
-    def version(self):
+    def version(self) -> Version:
         result = get_gmsh_version(self.gmsh_executable)
         if result is None:
             raise AttributeError("version")
 
         return result
 
-    def __enter__(self):
+    def __enter__(self) -> "GmshRunner":
         self.temp_dir_mgr = None
         temp_dir_mgr = _TempDirManager()
         try:
@@ -264,7 +280,7 @@ class GmshRunner:
 
             if self.incomplete_elements is not None:
                 cmdline.extend(["-setstring",
-                    "Mesh.SecondOrderIncomplete", self.incomplete_elements])
+                    "Mesh.SecondOrderIncomplete", str(int(self.incomplete_elements))])
 
             cmdline.extend(self.other_options)
             cmdline.append(source_file_name)
@@ -275,11 +291,11 @@ class GmshRunner:
             logger.info("invoking gmsh: '%s'", " ".join(cmdline))
             from pytools.prefork import call_capture_output
 
-            _retcode, stdout, stderr = call_capture_output(cmdline, working_dir)
+            _retcode, stdout_b, stderr_b = call_capture_output(cmdline, working_dir)
             logger.info("return from gmsh")
 
-            stdout = stdout.decode("utf-8")
-            stderr = stderr.decode("utf-8")
+            stdout = stdout_b.decode("utf-8")
+            stderr = stderr_b.decode("utf-8")
 
             import re
             error_match = re.match(r"([0-9]+)\s+error", stdout)
@@ -287,7 +303,8 @@ class GmshRunner:
 
             if error_match is not None or warning_match is not None:
                 # if we have one, we expect to see both
-                assert error_match is not None or warning_match is not None
+                assert error_match is not None
+                assert warning_match is not None
 
                 num_warnings = int(warning_match.group(1))
                 num_errors = int(error_match.group(1))
@@ -353,12 +370,16 @@ class GmshRunner:
                         raise
 
             self.temp_dir_mgr = temp_dir_mgr
+
             return self
         except Exception:
             temp_dir_mgr.clean_up()
             raise
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self,
+                 type: type[BaseException] | None,
+                 value: BaseException | None,
+                 traceback: TracebackType | None) -> None:
         self.output_file.close()
         if self.temp_dir_mgr is not None:
             self.temp_dir_mgr.clean_up()
