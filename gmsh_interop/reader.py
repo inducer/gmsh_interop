@@ -142,7 +142,7 @@ class LineFeeder:
         try:
             nl = next(self.line_iterable)
         except StopIteration:
-            raise GmshFileFormatError("unexpected end of file") from None
+            raise GmshFileFormatError("Unexpected end of file") from None
         else:
             return nl.strip()
 
@@ -604,7 +604,7 @@ def parse_gmsh(receiver: GmshMeshReceiverBase,
         next_line = feeder.get_next_line()
         if not next_line.startswith("$"):
             raise GmshFileFormatError(
-                    f"expected start of section, '{next_line}' found instead")
+                f"Expected start of section: found '{next_line}'")
 
         section_name = next_line[1:]
 
@@ -612,7 +612,7 @@ def parse_gmsh(receiver: GmshMeshReceiverBase,
             line_count = 0
             while True:
                 next_line = feeder.get_next_line()
-                if next_line == "$End"+section_name:
+                if next_line == f"$End{section_name}":
                     break
 
                 if line_count == 0:
@@ -620,7 +620,7 @@ def parse_gmsh(receiver: GmshMeshReceiverBase,
 
                 if line_count > 0:
                     raise GmshFileFormatError(
-                            "more than one line found in MeshFormat section")
+                            "More than one line found in 'MeshFormat' section")
 
                 if not version_number.startswith("2."):
                     # https://github.com/inducer/gmsh_interop/issues/18
@@ -631,12 +631,12 @@ def parse_gmsh(receiver: GmshMeshReceiverBase,
 
                 if version_number not in ["2.1", "2.2"]:
                     from warnings import warn
-                    warn(f"unexpected mesh version number '{version_number}' "
-                         "found, continuing", stacklevel=2)
+                    warn(f"Unexpected mesh version number '{version_number}' "
+                         "found. Continuing anyway!", stacklevel=2)
 
                 if file_type != "0":
                     raise GmshFileFormatError(
-                            "only ASCII gmsh file type is supported")
+                        f"Only ASCII Gmsh file type is supported: '{file_type}'")
 
                 line_count += 1
 
@@ -648,17 +648,20 @@ def parse_gmsh(receiver: GmshMeshReceiverBase,
 
             while True:
                 next_line = feeder.get_next_line()
-                if next_line == "$End"+section_name:
+                if next_line == f"$End{section_name}":
                     break
 
                 node_parts = next_line.split()
                 if len(node_parts) != 4:
                     raise GmshFileFormatError(
-                            "expected four-component line in $Nodes section")
+                        "Expected four-component line in $Nodes section: "
+                        f"got {node_parts} nodes")
 
                 read_node_idx = int(node_parts[0])
                 if read_node_idx != node_idx:
-                    raise GmshFileFormatError("out-of-order node index found")
+                    raise GmshFileFormatError(
+                        f"Out-of-order node index found: got node {read_node_idx} "
+                        f"but expected node {node_idx}")
 
                 if force_dimension is not None:
                     point = [float(x) for x in node_parts[1:force_dimension+1]]
@@ -672,7 +675,9 @@ def parse_gmsh(receiver: GmshMeshReceiverBase,
                 node_idx += 1
 
             if node_count+1 != node_idx:
-                raise GmshFileFormatError("unexpected number of nodes found")
+                raise GmshFileFormatError(
+                    f"Unexpected number of nodes found: got {node_idx} nodes "
+                    f"but expected {node_count + 1} nodes")
 
             receiver.finalize_nodes()
 
@@ -683,25 +688,28 @@ def parse_gmsh(receiver: GmshMeshReceiverBase,
             element_idx = 1
             while True:
                 next_line = feeder.get_next_line()
-                if next_line == "$End"+section_name:
+                if next_line == f"$End{section_name}":
                     break
 
                 elem_parts = [int(x) for x in next_line.split()]
 
                 if len(elem_parts) < 4:
-                    raise GmshFileFormatError("too few entries in element line")
+                    raise GmshFileFormatError(
+                        f"Too few entries in element line: got {elem_parts} "
+                        "but expected a list of at least 4 entries")
 
                 read_element_idx = elem_parts[0]
                 if read_element_idx != element_idx:
-                    raise GmshFileFormatError("out-of-order node index found")
+                    raise GmshFileFormatError(
+                        "Out-of-order element index found: got element "
+                        f"{read_element_idx} but expected element {element_idx}")
 
                 el_type_num = elem_parts[1]
                 try:
-                    element_type = \
-                            receiver.gmsh_element_type_to_info_map[el_type_num]
+                    element_type = receiver.gmsh_element_type_to_info_map[el_type_num]
                 except KeyError:
                     raise GmshFileFormatError(
-                            f"unexpected element type: {el_type_num}"
+                            f"Unexpected element type: {el_type_num}"
                             ) from None
 
                 tag_count = elem_parts[2]
@@ -713,7 +721,9 @@ def parse_gmsh(receiver: GmshMeshReceiverBase,
 
                 if element_type.node_count() != len(node_indices):
                     raise GmshFileFormatError(
-                            "unexpected number of nodes in element")
+                        "Unexpected number of nodes in element: got "
+                        f"{len(node_indices)} nodes but expected "
+                        f"{element_type.node_count()} nodes")
 
                 gmsh_vertex_nrs = node_indices[:element_type.vertex_count()]
                 zero_based_idx = element_idx - 1
@@ -729,7 +739,9 @@ def parse_gmsh(receiver: GmshMeshReceiverBase,
                 element_idx += 1
 
             if element_count+1 != element_idx:
-                raise GmshFileFormatError("unexpected number of elements found")
+                raise GmshFileFormatError(
+                    f"Unexpected number of elements found: got {element_idx} "
+                    f"elements but expected {element_count + 1}")
 
             receiver.finalize_elements()
 
@@ -739,7 +751,7 @@ def parse_gmsh(receiver: GmshMeshReceiverBase,
 
             while True:
                 next_line = feeder.get_next_line()
-                if next_line == "$End"+section_name:
+                if next_line == f"$End{section_name}":
                     break
 
                 dimension_, number_, name = next_line.split(" ", 2)
@@ -747,7 +759,8 @@ def parse_gmsh(receiver: GmshMeshReceiverBase,
                 number = int(number_)
 
                 if not name[0] == '"' or not name[-1] == '"':
-                    raise GmshFileFormatError("expected quotes around physical name")
+                    raise GmshFileFormatError(
+                        f"Expected quotes around physical name: <{name}>")
 
                 receiver.add_tag(name[1:-1], number, dimension)
 
@@ -755,18 +768,19 @@ def parse_gmsh(receiver: GmshMeshReceiverBase,
 
             if name_count+1 != name_idx:
                 raise GmshFileFormatError(
-                        "unexpected number of physical names found")
+                    f"Unexpected number of physical names found: got {name_idx} "
+                    f"names but expected {name_count + 1} names")
 
             receiver.finalize_tags()
         else:
             # unrecognized section, skip
             from warnings import warn
-            warn(f"unrecognized section '{section_name}' in gmsh file",
+            warn(f"Unrecognized section '{section_name}' in Gmsh file",
                  stacklevel=2)
 
             while True:
                 next_line = feeder.get_next_line()
-                if next_line == "$End"+section_name:
+                if next_line == f"$End{section_name}":
                     break
 
 # }}}
