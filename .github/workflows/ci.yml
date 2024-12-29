@@ -8,6 +8,13 @@ on:
         - cron:  '17 3 * * 0'
 
 jobs:
+    typos:
+        name: Typos
+        runs-on: ubuntu-latest
+        steps:
+        -   uses: actions/checkout@v4
+        -   uses: crate-ci/typos@master
+
     ruff:
         name: Ruff
         runs-on: ubuntu-latest
@@ -18,6 +25,24 @@ jobs:
             run: |
                 pip install ruff
                 ruff check
+
+    mypy:
+        name: Mypy
+        runs-on: ubuntu-latest
+        steps:
+        -   uses: actions/checkout@v4
+        -
+            uses: actions/setup-python@v5
+            with:
+                python-version: '3.x'
+        -   name: "Main Script"
+            run: |
+                EXTRA_INSTALL="mypy pytest"
+                curl -L -O https://tiker.net/ci-support-v0
+                . ./ci-support-v0
+
+                build_py_project_in_venv
+                python -m mypy gmsh_interop test contrib
 
     pytest3:
         name: Pytest Conda Py3
