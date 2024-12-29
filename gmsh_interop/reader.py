@@ -23,6 +23,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from abc import ABC, abstractmethod
+from collections.abc import Iterable, Iterator, MutableSequence, Sequence
+from typing import ClassVar, Literal
+
 import numpy as np
 
 from pytools import memoize_method
@@ -85,13 +89,13 @@ Reader
 
 # {{{ tools
 
-def generate_triangle_vertex_tuples(order):
+def generate_triangle_vertex_tuples(order: int) -> Iterator[tuple[int, int]]:
     yield (0, 0)
     yield (order, 0)
     yield (0, order)
 
 
-def generate_triangle_edge_tuples(order):
+def generate_triangle_edge_tuples(order: int) -> Iterator[tuple[int, int]]:
     for i in range(1, order):
         yield (i, 0)
     for i in range(1, order):
@@ -100,24 +104,25 @@ def generate_triangle_edge_tuples(order):
         yield (0, order-i)
 
 
-def generate_triangle_volume_tuples(order):
+def generate_triangle_volume_tuples(order: int) -> Iterator[tuple[int, int]]:
     for i in range(1, order):
         for j in range(1, order-i):
             yield (j, i)
 
 
-def generate_quad_vertex_tuples(dim, order):
+def generate_quad_vertex_tuples(dim: int, order: int) -> Iterator[tuple[int, ...]]:
     from pytools import generate_nonnegative_integer_tuples_below
+
     for tup in generate_nonnegative_integer_tuples_below(2, dim):
         yield tuple(order * i for i in tup)
 
 
 class LineFeeder:
-    def __init__(self, line_iterable):
+    def __init__(self, line_iterable: Iterable[str]) -> None:
         self.line_iterable = iter(line_iterable)
-        self.next_line = None
+        self.next_line: str | None = None
 
-    def has_next_line(self):
+    def has_next_line(self) -> bool:
         if self.next_line is not None:
             return True
 
@@ -128,7 +133,7 @@ class LineFeeder:
         else:
             return True
 
-    def get_next_line(self):
+    def get_next_line(self) -> str:
         if self.next_line is not None:
             nl = self.next_line
             self.next_line = None
@@ -146,7 +151,11 @@ class LineFeeder:
 
 # {{{ element info
 
-class GmshElementBase:
+IndexArray = np.ndarray[tuple[int, ...], np.dtype[np.integer]]
+NodeTuples = Sequence[tuple[int, ...]]
+
+
+class GmshElementBase(ABC):
     """
     .. automethod:: vertex_count
     .. automethod:: node_count
@@ -158,30 +167,42 @@ class GmshElementBase:
         whose sum is less than or equal to the order of the element.
 
     .. automethod:: get_lexicographic_gmsh_node_indices
-
-      (Implemented by subclasses)
     """
-    def __init__(self, order):
+
+    def __init__(self, order: int) -> None:
         self.order = order
 
     @property
-    def element_type(self):
-        raise NotImplementedError
+    @abstractmethod
+    def dimensions(self) -> int:
+        pass
 
-    def vertex_count(self):
-        raise NotImplementedError
+    @property
+    @abstractmethod
+    def element_type(self) -> int:
+        pass
 
-    def node_count(self):
-        raise NotImplementedError
+    @abstractmethod
+    def vertex_count(self) -> int:
+        pass
 
-    def lexicographic_node_tuples(self):
-        raise NotImplementedError
+    @abstractmethod
+    def node_count(self) -> int:
+        pass
+
+    @abstractmethod
+    def gmsh_node_tuples(self) -> NodeTuples:
+        pass
+
+    @abstractmethod
+    def lexicographic_node_tuples(self) -> NodeTuples:
+        pass
 
     @memoize_method
-    def get_lexicographic_gmsh_node_indices(self):
+    def get_lexicographic_gmsh_node_indices(self) -> IndexArray:
         gmsh_tup_to_index = {
-                tup: i
-                for i, tup in enumerate(self.gmsh_node_tuples())}
+            tup: i for i, tup in enumerate(self.gmsh_node_tuples())
+        }
 
         return np.array([
             gmsh_tup_to_index[tup] for tup in self.lexicographic_node_tuples()],
@@ -191,11 +212,11 @@ class GmshElementBase:
 # {{{ simplices
 
 class GmshSimplexElementBase(GmshElementBase):
-    def vertex_count(self):
+    def vertex_count(self) -> int:
         return self.dimensions + 1
 
     @memoize_method
-    def node_count(self):
+    def node_count(self) -> int:
         """Return the number of interpolation nodes in this element."""
         import math
         from functools import reduce
@@ -205,7 +226,7 @@ class GmshSimplexElementBase(GmshElementBase):
                 // math.factorial(self.dimensions))
 
     @memoize_method
-    def lexicographic_node_tuples(self):
+    def lexicographic_node_tuples(self) -> NodeTuples:
         from pytools import (
             generate_nonnegative_integer_tuples_summing_to_at_most as gnitstam,
         )
@@ -216,44 +237,46 @@ class GmshSimplexElementBase(GmshElementBase):
 
 
 class GmshPoint(GmshSimplexElementBase):
-    dimensions = 0
+    @property
+    def dimensions(self) -> int:
+        return 0
 
     @property
-    def element_type(self):
+    def element_type(self) -> int:
         return 15
 
     @memoize_method
-    def gmsh_node_tuples(self):
+    def gmsh_node_tuples(self) -> NodeTuples:
         return [()]
 
 
 class GmshIntervalElement(GmshSimplexElementBase):
-    dimensions = 1
+    @property
+    def dimensions(self) -> int:
+        return 1
 
     @property
     @memoize_method
-    def element_type(self):
+    def element_type(self) -> int:
         return [1, 8, 26, 27, 28, 62, 63, 64, 65, 66][self.order - 1]
 
     @memoize_method
-    def gmsh_node_tuples(self):
-        return [(0,), (self.order,), ] + [
-                (i,) for i in range(1, self.order)]
+    def gmsh_node_tuples(self) -> NodeTuples:
+        return [(0,), (self.order,), ] + [(i,) for i in range(1, self.order)]
 
 
 class GmshIncompleteTriangularElement(GmshSimplexElementBase):
-    dimensions = 2
-
-    def __init__(self, order):
-        self.order = order
+    @property
+    def dimensions(self) -> int:
+        return 2
 
     @property
     @memoize_method
-    def element_type(self):
+    def element_type(self) -> int:
         return {3: 20, 4: 22, 5: 24}[self.order]
 
     @memoize_method
-    def gmsh_node_tuples(self):
+    def gmsh_node_tuples(self) -> NodeTuples:
         result = []
         for tup in generate_triangle_vertex_tuples(self.order):
             result.append(tup)
@@ -263,31 +286,35 @@ class GmshIncompleteTriangularElement(GmshSimplexElementBase):
 
 
 class GmshTriangularElement(GmshSimplexElementBase):
-    dimensions = 2
+    @property
+    def dimensions(self) -> int:
+        return 2
 
     @property
     @memoize_method
-    def element_type(self):
+    def element_type(self) -> int:
         from gmsh_interop.node_tuples import triangle_data
         return triangle_data[self.order]["element_type"]
 
     @memoize_method
-    def gmsh_node_tuples(self):
+    def gmsh_node_tuples(self) -> NodeTuples:
         from gmsh_interop.node_tuples import triangle_data
         return triangle_data[self.order]["node_tuples"]
 
 
 class GmshTetrahedralElement(GmshSimplexElementBase):
-    dimensions = 3
+    @property
+    def dimensions(self) -> int:
+        return 3
 
     @property
     @memoize_method
-    def element_type(self):
+    def element_type(self) -> int:
         from gmsh_interop.node_tuples import tetrahedron_data
         return tetrahedron_data[self.order]["element_type"]
 
     @memoize_method
-    def gmsh_node_tuples(self):
+    def gmsh_node_tuples(self) -> NodeTuples:
         from gmsh_interop.node_tuples import tetrahedron_data
         return tetrahedron_data[self.order]["node_tuples"]
 
@@ -297,19 +324,20 @@ class GmshTetrahedralElement(GmshSimplexElementBase):
 # {{{ tensor product elements
 
 class GmshTensorProductElementBase(GmshElementBase):
-    def vertex_count(self):
-        return 2**self.dimensions
+    def vertex_count(self) -> int:
+        return int(2**self.dimensions)
 
     @memoize_method
-    def node_count(self):
-        return (self.order+1) ** self.dimensions
+    def node_count(self) -> int:
+        return int((self.order+1) ** self.dimensions)
 
     @memoize_method
-    def lexicographic_node_tuples(self):
-        """Generate tuples enumerating the node indices present
-        in this element. Each tuple has a length equal to the dimension
-        of the element. The tuples constituents are non-negative integers
-        whose sum is less than or equal to the order of the element.
+    def lexicographic_node_tuples(self) -> NodeTuples:
+        """Generate tuples enumerating the node indices present in this element.
+
+        Each tuple has a length equal to the dimension of the element. The
+        tuples constituents are non-negative integers whose sum is less than or
+        equal to the order of the element.
         """
         from pytools import generate_nonnegative_integer_tuples_below as gnitb
 
@@ -323,31 +351,35 @@ class GmshTensorProductElementBase(GmshElementBase):
 
 
 class GmshQuadrilateralElement(GmshTensorProductElementBase):
-    dimensions = 2
+    @property
+    def dimensions(self) -> int:
+        return 2
 
     @property
     @memoize_method
-    def element_type(self):
+    def element_type(self) -> int:
         from gmsh_interop.node_tuples import quadrangle_data
         return quadrangle_data[self.order]["element_type"]
 
     @memoize_method
-    def gmsh_node_tuples(self):
+    def gmsh_node_tuples(self) -> NodeTuples:
         from gmsh_interop.node_tuples import quadrangle_data
         return quadrangle_data[self.order]["node_tuples"]
 
 
 class GmshHexahedralElement(GmshTensorProductElementBase):
-    dimensions = 3
+    @property
+    def dimensions(self) -> int:
+        return 3
 
     @property
     @memoize_method
-    def element_type(self):
+    def element_type(self) -> int:
         from gmsh_interop.node_tuples import hexahedron_data
         return hexahedron_data[self.order]["element_type"]
 
     @memoize_method
-    def gmsh_node_tuples(self):
+    def gmsh_node_tuples(self) -> NodeTuples:
         from gmsh_interop.node_tuples import hexahedron_data
         return hexahedron_data[self.order]["node_tuples"]
 
@@ -358,7 +390,11 @@ class GmshHexahedralElement(GmshTensorProductElementBase):
 
 # {{{ receiver interface
 
-def _gmsh_supported_element_type_map():
+Point = np.ndarray[tuple[int, ...], np.dtype[np.floating]]
+Nodes = np.ndarray[tuple[int, ...], np.dtype[np.floating]]
+
+
+def _gmsh_supported_element_type_map() -> dict[int, GmshElementBase]:
     supported_elements = (
             [GmshPoint(0)]
             + [GmshIntervalElement(n + 1) for n in range(10)]
@@ -374,7 +410,8 @@ def _gmsh_supported_element_type_map():
 
 class GmshMeshReceiverBase:
     """
-    .. attribute:: gmsh_element_type_to_info_map
+    .. autoattribute:: gmsh_element_type_to_info_map
+
     .. automethod:: set_up_nodes
     .. automethod:: add_node
     .. automethod:: finalize_nodes
@@ -385,31 +422,36 @@ class GmshMeshReceiverBase:
     .. automethod:: finalize_tags
     """
 
-    gmsh_element_type_to_info_map = _gmsh_supported_element_type_map()
+    gmsh_element_type_to_info_map: ClassVar[dict[int, GmshElementBase]] = (
+        _gmsh_supported_element_type_map())
 
-    def set_up_nodes(self, count):
+    def set_up_nodes(self, count: int) -> None:
         pass
 
-    def add_node(self, node_nr, point):
+    def add_node(self, node_nr: int, point: Point) -> None:
         pass
 
-    def finalize_nodes(self):
+    def finalize_nodes(self) -> None:
         pass
 
-    def set_up_elements(self, count):
+    def set_up_elements(self, count: int) -> None:
         pass
 
-    def add_element(self, element_nr, element_type, vertex_nrs,
-            lexicographic_nodes, tag_numbers):
+    def add_element(self,
+                    element_nr: int,
+                    element_type: GmshElementBase,
+                    vertex_nrs: IndexArray,
+                    lexicographic_nodes: Nodes,
+                    tag_numbers: Sequence[int]) -> None:
         pass
 
-    def finalize_elements(self):
+    def finalize_elements(self) -> None:
         pass
 
-    def add_tag(self, name, index, dimension):
+    def add_tag(self, name: str, index: int, dimension: int) -> None:
         pass
 
-    def finalize_tags(self):
+    def finalize_tags(self) -> None:
         pass
 
 # }}}
@@ -418,62 +460,72 @@ class GmshMeshReceiverBase:
 # {{{ receiver example
 
 class GmshMeshReceiverNumPy(GmshMeshReceiverBase):
-    """GmshReceiver that emulates the semantics of
-    :class:`meshpy.triangle.MeshInfo` and :class:`meshpy.tet.MeshInfo` by using
-    similar fields, but instead of loading data into ForeignArrays, load into
-    NumPy arrays. Since this class is not wrapping any libraries in other
-    languages -- the Gmsh data is obtained via parsing text -- use :mod:`numpy`
-    arrays as the base array data structure for convenience.
+    """GmshReceiver that loads fields into :mod:`numpy` arrays.
+
+    This class emulates the semantics of :class:`meshpy.triangle.MeshInfo` and
+    :class:`meshpy.tet.MeshInfo` by using similar fields, but instead of loading
+    data into ForeignArrays, load into :mod:`numpy` arrays. Since this class is
+    not wrapping any libraries in other languages -- the Gmsh data is obtained
+    via parsing text -- use :mod:`numpy` arrays as the base array data structure
+    for convenience.
 
     .. versionadded:: 2014.1
     """
 
-    def __init__(self):
-        # Use data fields similar to meshpy.triangle.MeshInfo and
-        # meshpy.tet.MeshInfo
-        self.points = None
-        self.elements = None
-        self.element_types = None
-        self.element_markers = None
-        self.tags = None
+    def __init__(self) -> None:
+        # Use data fields similar to meshpy.triangle.MeshInfo and meshpy.tet.MeshInfo
+        self.points: MutableSequence[Point | None] | None = None
+        self.elements: MutableSequence[IndexArray | None] | None = None
+        self.element_types: MutableSequence[GmshElementBase | None] | None = None
+        self.element_markers: MutableSequence[Sequence[int] | None] | None = None
+        self.tags: MutableSequence[tuple[str, int, int]] | None = None
 
     # Gmsh has no explicit concept of facets or faces; certain faces are a type
     # of element.  Consequently, there are no face markers, but elements can be
     # grouped together in physical groups that serve as markers.
 
-    def set_up_nodes(self, count):
+    def set_up_nodes(self, count: int) -> None:
         # Preallocate array of nodes within list; treat None as sentinel value.
         # Preallocation not done for performance, but to assign values at indices
         # in random order.
         self.points = [None] * count
 
-    def add_node(self, node_nr, point):
+    def add_node(self, node_nr: int, point: Point) -> None:
+        assert self.points is not None
         self.points[node_nr] = point
 
-    def finalize_nodes(self):
+    def finalize_nodes(self) -> None:
         pass
 
-    def set_up_elements(self, count):
+    def set_up_elements(self, count: int) -> None:
         # Preallocation of arrays for assignment elements in random order.
         self.elements = [None] * count
         self.element_types = [None] * count
         self.element_markers = [None] * count
         self.tags = []
 
-    def add_element(self, element_nr, element_type, vertex_nrs,
-            lexicographic_nodes, tag_numbers):
+    def add_element(self,
+                    element_nr: int,
+                    element_type: GmshElementBase,
+                    vertex_nrs: IndexArray,
+                    lexicographic_nodes: Nodes,
+                    tag_numbers: Sequence[int]) -> None:
+        assert self.elements is not None
         self.elements[element_nr] = vertex_nrs
+        assert self.element_types is not None
         self.element_types[element_nr] = element_type
+        assert self.element_markers is not None
         self.element_markers[element_nr] = tag_numbers
         # TODO: Add lexicographic node information
 
-    def finalize_elements(self):
+    def finalize_elements(self) -> None:
         pass
 
-    def add_tag(self, name, index, dimension):
+    def add_tag(self, name: str, index: int, dimension: int) -> None:
+        assert self.tags is not None
         self.tags.append((name, index, dimension))
 
-    def finalize_tags(self):
+    def finalize_tags(self) -> None:
         pass
 
 # }}}
@@ -485,25 +537,32 @@ class GmshFileFormatError(RuntimeError):
     pass
 
 
-def read_gmsh(receiver, filename, force_dimension=None):
+def read_gmsh(
+        receiver: GmshMeshReceiverBase,
+        filename: str,
+        force_dimension: int | None = None) -> None:
     """Read a gmsh mesh file from *filename* and feed it to *receiver*.
 
     :param receiver: Implements the :class:`GmshMeshReceiverBase` interface.
     :param force_dimension: if not None, truncate point coordinates to
         this many dimensions.
     """
-    mesh_file = open(filename)
-    try:
-        result = parse_gmsh(receiver, mesh_file, force_dimension=force_dimension)
-    finally:
-        mesh_file.close()
-
-    return result
+    with open(filename) as mesh_file:
+        parse_gmsh(receiver, mesh_file, force_dimension=force_dimension)
 
 
-def generate_gmsh(receiver, source, dimensions=None, order=None, other_options=(),
-            extension="geo", gmsh_executable="gmsh", force_dimension=None,
-            target_unit=None, output_file_name=None, save_tmp_files_in=None):
+def generate_gmsh(
+        receiver: GmshMeshReceiverBase,
+        source: str | ScriptSource | FileSource | ScriptWithFilesSource,
+        dimensions: int | None = None,
+        order: int | None = None,
+        other_options: tuple[str, ...] = (),
+        extension: str = "geo",
+        gmsh_executable: str = "gmsh",
+        force_dimension: int | None = None,
+        target_unit: Literal["M", "MM"] | None = None,
+        output_file_name: str | None = None,
+        save_tmp_files_in: str | None = None) -> None:
     """Run gmsh and feed the output to *receiver*.
 
     :arg receiver: a class that implements the :class:`GmshMeshReceiverBase`
@@ -511,6 +570,7 @@ def generate_gmsh(receiver, source, dimensions=None, order=None, other_options=(
     :arg source: an instance of :class:`ScriptSource` or :class:`FileSource`.
     """
     from gmsh_interop.runner import GmshRunner
+
     runner = GmshRunner(source, dimensions, order=order,
             other_options=other_options, extension=extension,
             gmsh_executable=gmsh_executable,
@@ -518,17 +578,16 @@ def generate_gmsh(receiver, source, dimensions=None, order=None, other_options=(
             output_file_name=output_file_name,
             save_tmp_files_in=save_tmp_files_in)
 
-    runner.__enter__()
-    try:
-        result = parse_gmsh(receiver, runner.output_file,
-                force_dimension=force_dimension)
-    finally:
-        runner.__exit__(None, None, None)
-
-    return result
+    with runner:
+        parse_gmsh(
+            receiver,
+            runner.output_file,
+            force_dimension=force_dimension)
 
 
-def parse_gmsh(receiver, line_iterable, force_dimension=None):
+def parse_gmsh(receiver: GmshMeshReceiverBase,
+               line_iterable: Iterable[str],
+               force_dimension: int | None = None) -> None:
     """
     :arg receiver: this object will be fed the entities encountered in
         reading the GMSH file. See :class:`GmshMeshReceiverBase` for the
@@ -592,19 +651,19 @@ def parse_gmsh(receiver, line_iterable, force_dimension=None):
                 if next_line == "$End"+section_name:
                     break
 
-                parts = next_line.split()
-                if len(parts) != 4:
+                node_parts = next_line.split()
+                if len(node_parts) != 4:
                     raise GmshFileFormatError(
                             "expected four-component line in $Nodes section")
 
-                read_node_idx = int(parts[0])
+                read_node_idx = int(node_parts[0])
                 if read_node_idx != node_idx:
                     raise GmshFileFormatError("out-of-order node index found")
 
                 if force_dimension is not None:
-                    point = [float(x) for x in parts[1:force_dimension+1]]
+                    point = [float(x) for x in node_parts[1:force_dimension+1]]
                 else:
-                    point = [float(x) for x in parts[1:]]
+                    point = [float(x) for x in node_parts[1:]]
 
                 receiver.add_node(
                         node_idx-1,
@@ -627,16 +686,16 @@ def parse_gmsh(receiver, line_iterable, force_dimension=None):
                 if next_line == "$End"+section_name:
                     break
 
-                parts = [int(x) for x in next_line.split()]
+                elem_parts = [int(x) for x in next_line.split()]
 
-                if len(parts) < 4:
+                if len(elem_parts) < 4:
                     raise GmshFileFormatError("too few entries in element line")
 
-                read_element_idx = parts[0]
+                read_element_idx = elem_parts[0]
                 if read_element_idx != element_idx:
                     raise GmshFileFormatError("out-of-order node index found")
 
-                el_type_num = parts[1]
+                el_type_num = elem_parts[1]
                 try:
                     element_type = \
                             receiver.gmsh_element_type_to_info_map[el_type_num]
@@ -645,12 +704,12 @@ def parse_gmsh(receiver, line_iterable, force_dimension=None):
                             f"unexpected element type: {el_type_num}"
                             ) from None
 
-                tag_count = parts[2]
-                tags = parts[3:3+tag_count]
+                tag_count = elem_parts[2]
+                tags = elem_parts[3:3+tag_count]
 
                 # convert to zero-based
                 node_indices = np.array(
-                        [x-1 for x in parts[3+tag_count:]], dtype=np.intp)
+                        [x-1 for x in elem_parts[3+tag_count:]], dtype=np.intp)
 
                 if element_type.node_count() != len(node_indices):
                     raise GmshFileFormatError(
@@ -683,9 +742,9 @@ def parse_gmsh(receiver, line_iterable, force_dimension=None):
                 if next_line == "$End"+section_name:
                     break
 
-                dimension, number, name = next_line.split(" ", 2)
-                dimension = int(dimension)
-                number = int(number)
+                dimension_, number_, name = next_line.split(" ", 2)
+                dimension = int(dimension_)
+                number = int(number_)
 
                 if not name[0] == '"' or not name[-1] == '"':
                     raise GmshFileFormatError("expected quotes around physical name")
