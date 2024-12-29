@@ -20,12 +20,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+
 import pytest
 
 
 # {{{ gmsh
 
-def search_on_path(filenames):
+def search_on_path(filenames: list[str]) -> str | None:
     """Find file on system path."""
     # http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/52224
 
@@ -39,6 +40,8 @@ def search_on_path(filenames):
         for filename in filenames:
             if exists(join(path, filename)):
                 return abspath(join(path, filename))
+
+    return None
 
 
 GMSH_SPHERE = """
@@ -101,7 +104,9 @@ Mesh 3;
 
 @pytest.mark.parametrize("dim", [2, 3])
 @pytest.mark.parametrize("order", [1, 3])
-def test_simplex_gmsh(dim, order, visualize=False):
+def test_simplex_gmsh(dim: int,
+                      order: int,
+                      visualize: bool = False) -> None:
     if search_on_path(["gmsh"]) is None:
         pytest.skip("gmsh executable not found")
 
@@ -121,7 +126,9 @@ def test_simplex_gmsh(dim, order, visualize=False):
 
 @pytest.mark.parametrize("dim", [2, 3])
 @pytest.mark.parametrize("order", [1, 3])
-def test_quad_gmsh(dim, order, visualize=False):
+def test_quad_gmsh(dim: int,
+                   order: int,
+                   visualize: bool = False) -> None:
     if search_on_path(["gmsh"]) is None:
         pytest.skip("gmsh executable not found")
 
@@ -145,7 +152,7 @@ def test_quad_gmsh(dim, order, visualize=False):
 # }}}
 
 
-def test_lex_node_ordering():
+def test_lex_node_ordering() -> None:
     """Check that lex nodes go through axes 'in order', i.e. that the
     r-axis is the first one to become non-zero, then s, then t.
     """

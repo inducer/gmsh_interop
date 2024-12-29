@@ -1,3 +1,6 @@
+import os
+from collections.abc import Sequence
+
 import gmsh
 
 
@@ -83,7 +86,11 @@ HEXAHEHEDRON_ELEMENTS = {
         }
 
 
-def generate_node_tuples_from_gmsh(eltype, eldim, elvertices, domain="unit"):
+def generate_node_tuples_from_gmsh(
+        eltype: int,
+        eldim: int,
+        elvertices: int,
+        domain: str = "unit") -> Sequence[tuple[int, ...]]:
     # {{{ get element
 
     _name, dim, order, nnodes, nodes, nvertices = (
@@ -105,7 +112,11 @@ def generate_node_tuples_from_gmsh(eltype, eldim, elvertices, domain="unit"):
     return [tuple(int(x) for x in node) for node in nodes.astype(int)]
 
 
-def generate_node_tuples(filename):
+def generate_node_tuples(filename: str | None, *, overwrite: bool = False) -> int:
+    if not overwrite and filename is not None and os.path.exists(filename):
+        print(f"ERROR: File already exists (use --force): '{filename}'")
+        return 1
+
     tri_data = {}
     tet_data = {}
     qua_data = {}
@@ -149,6 +160,7 @@ def generate_node_tuples(filename):
     gmsh.finalize()
 
     from pprint import pformat
+
     txt = (OUTPUT_TEMPLATE % (
         gmsh.GMSH_API_VERSION,
         pformat(tri_data, width=80),
@@ -163,12 +175,20 @@ def generate_node_tuples(filename):
         with open(filename, "w") as fd:
             fd.write(txt)
 
+    return 0
+
 
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument("filename", nargs="?", default=None)
+    parser.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help="Overwrite existing files",
+    )
     args = parser.parse_args()
 
-    generate_node_tuples(args.filename)
+    raise SystemExit(generate_node_tuples(args.filename, overwrite=args.force))
