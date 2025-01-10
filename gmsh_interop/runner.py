@@ -77,7 +77,7 @@ class _TempDirManager:
         _erase_dir(self.path)
 
 
-class ScriptSource:
+class ScriptSource:  # noqa: B903
     """
     .. versionadded:: 2016.1
     """
@@ -99,7 +99,7 @@ class LiteralSource(ScriptSource):
              DeprecationWarning, stacklevel=2)
 
 
-class FileSource:
+class FileSource:  # noqa: B903
     """
     .. versionadded:: 2014.1
     """
