@@ -727,9 +727,7 @@ def parse_gmsh(receiver: GmshMeshReceiverBase,
 
                 gmsh_vertex_nrs = node_indices[:element_type.vertex_count()]
                 zero_based_idx = element_idx - 1
-
-                tag_numbers = [tag for tag in tags[:1] if tag != 0]
-
+                tag_numbers = [tag for tag in tags if tag != 0]
                 receiver.add_element(element_nr=zero_based_idx,
                         element_type=element_type, vertex_nrs=gmsh_vertex_nrs,
                         lexicographic_nodes=node_indices[
