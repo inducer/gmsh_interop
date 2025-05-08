@@ -28,6 +28,7 @@ from collections.abc import Iterable, Iterator, MutableSequence, Sequence
 from typing import ClassVar, Literal
 
 import numpy as np
+from typing_extensions import override
 
 from pytools import memoize_method
 
@@ -169,6 +170,8 @@ class GmshElementBase(ABC):
     .. automethod:: get_lexicographic_gmsh_node_indices
     """
 
+    order: int
+
     def __init__(self, order: int) -> None:
         self.order = order
 
@@ -212,6 +215,7 @@ class GmshElementBase(ABC):
 # {{{ simplices
 
 class GmshSimplexElementBase(GmshElementBase):
+    @override
     def vertex_count(self) -> int:
         return self.dimensions + 1
 
@@ -238,10 +242,12 @@ class GmshSimplexElementBase(GmshElementBase):
 
 class GmshPoint(GmshSimplexElementBase):
     @property
+    @override
     def dimensions(self) -> int:
         return 0
 
     @property
+    @override
     def element_type(self) -> int:
         return 15
 
@@ -252,6 +258,7 @@ class GmshPoint(GmshSimplexElementBase):
 
 class GmshIntervalElement(GmshSimplexElementBase):
     @property
+    @override
     def dimensions(self) -> int:
         return 1
 
@@ -267,6 +274,7 @@ class GmshIntervalElement(GmshSimplexElementBase):
 
 class GmshIncompleteTriangularElement(GmshSimplexElementBase):
     @property
+    @override
     def dimensions(self) -> int:
         return 2
 
@@ -277,7 +285,7 @@ class GmshIncompleteTriangularElement(GmshSimplexElementBase):
 
     @memoize_method
     def gmsh_node_tuples(self) -> NodeTuples:
-        result = []
+        result: list[tuple[int, ...]] = []
         for tup in generate_triangle_vertex_tuples(self.order):
             result.append(tup)
         for tup in generate_triangle_edge_tuples(self.order):
@@ -287,6 +295,7 @@ class GmshIncompleteTriangularElement(GmshSimplexElementBase):
 
 class GmshTriangularElement(GmshSimplexElementBase):
     @property
+    @override
     def dimensions(self) -> int:
         return 2
 
@@ -304,6 +313,7 @@ class GmshTriangularElement(GmshSimplexElementBase):
 
 class GmshTetrahedralElement(GmshSimplexElementBase):
     @property
+    @override
     def dimensions(self) -> int:
         return 3
 
@@ -323,7 +333,8 @@ class GmshTetrahedralElement(GmshSimplexElementBase):
 
 # {{{ tensor product elements
 
-class GmshTensorProductElementBase(GmshElementBase):
+class GmshTensorProductElementBase(GmshElementBase, ABC):
+    @override
     def vertex_count(self) -> int:
         return int(2**self.dimensions)
 
@@ -352,6 +363,7 @@ class GmshTensorProductElementBase(GmshElementBase):
 
 class GmshQuadrilateralElement(GmshTensorProductElementBase):
     @property
+    @override
     def dimensions(self) -> int:
         return 2
 
@@ -369,6 +381,7 @@ class GmshQuadrilateralElement(GmshTensorProductElementBase):
 
 class GmshHexahedralElement(GmshTensorProductElementBase):
     @property
+    @override
     def dimensions(self) -> int:
         return 3
 
@@ -484,19 +497,23 @@ class GmshMeshReceiverNumPy(GmshMeshReceiverBase):
     # of element.  Consequently, there are no face markers, but elements can be
     # grouped together in physical groups that serve as markers.
 
+    @override
     def set_up_nodes(self, count: int) -> None:
         # Preallocate array of nodes within list; treat None as sentinel value.
         # Preallocation not done for performance, but to assign values at indices
         # in random order.
         self.points = [None] * count
 
+    @override
     def add_node(self, node_nr: int, point: Point) -> None:
         assert self.points is not None
         self.points[node_nr] = point
 
+    @override
     def finalize_nodes(self) -> None:
         pass
 
+    @override
     def set_up_elements(self, count: int) -> None:
         # Preallocation of arrays for assignment elements in random order.
         self.elements = [None] * count
@@ -504,6 +521,7 @@ class GmshMeshReceiverNumPy(GmshMeshReceiverBase):
         self.element_markers = [None] * count
         self.tags = []
 
+    @override
     def add_element(self,
                     element_nr: int,
                     element_type: GmshElementBase,
@@ -518,13 +536,16 @@ class GmshMeshReceiverNumPy(GmshMeshReceiverBase):
         self.element_markers[element_nr] = tag_numbers
         # TODO: Add lexicographic node information
 
+    @override
     def finalize_elements(self) -> None:
         pass
 
+    @override
     def add_tag(self, name: str, index: int, dimension: int) -> None:
         assert self.tags is not None
         self.tags.append((name, index, dimension))
 
+    @override
     def finalize_tags(self) -> None:
         pass
 
@@ -716,8 +737,7 @@ def parse_gmsh(receiver: GmshMeshReceiverBase,
                 tags = elem_parts[3:3+tag_count]
 
                 # convert to zero-based
-                node_indices = np.array(
-                        [x-1 for x in elem_parts[3+tag_count:]], dtype=np.intp)
+                node_indices = np.array(elem_parts[3+tag_count:], dtype=np.intp) - 1
 
                 if element_type.node_count() != len(node_indices):
                     raise GmshFileFormatError(
