@@ -62,6 +62,8 @@ def _erase_dir(dir: str) -> None:
 
 
 class _TempDirManager:
+    path: str
+
     def __init__(self) -> None:
         from tempfile import mkdtemp
         self.path = mkdtemp()
@@ -81,6 +83,9 @@ class ScriptSource:  # noqa: B903
     """
     .. versionadded:: 2016.1
     """
+    source: str
+    extension: str
+
     def __init__(self, source: str, extension: str) -> None:
         self.source = source
         self.extension = extension
@@ -104,6 +109,8 @@ class FileSource:  # noqa: B903
     .. versionadded:: 2014.1
     """
 
+    filename: str
+
     def __init__(self, filename: str) -> None:
         self.filename = filename
 
@@ -121,6 +128,10 @@ class ScriptWithFilesSource:
         The names of files to be copied to the temporary directory where
         gmsh is run.
     """
+
+    source: str
+    source_name: str
+    filenames: tuple[str, ...]
 
     def __init__(self,
                  source: str,
