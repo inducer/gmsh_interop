@@ -96,3 +96,8 @@ module = [
     "gmsh.*",
 ]
 ignore_missing_imports = true
+
+[tool.basedpyright]
+reportImplicitStringConcatenation = "none"
+reportUnnecessaryIsInstance = "none"
+reportUnusedCallResult = "none"
