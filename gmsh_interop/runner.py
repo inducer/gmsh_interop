@@ -26,7 +26,7 @@ THE SOFTWARE.
 import logging
 from collections.abc import Iterable
 from types import TracebackType
-from typing import Literal
+from typing import Literal, TextIO
 
 from packaging.version import Version
 
@@ -100,7 +100,7 @@ class LiteralSource(ScriptSource):
         super().__init__(source, extension)
 
         from warnings import warn
-        warn("LiteralSource is deprecated, use ScriptSource instead",
+        warn("LiteralSource is deprecated, use ScriptSource instead.",
              DeprecationWarning, stacklevel=2)
 
 
@@ -199,15 +199,18 @@ class GmshRunner:
         if output_file_name is None:
             output_file_name = "output.msh"
 
-        self.source = source
-        self.dimensions = dimensions
-        self.order = order
-        self.incomplete_elements = incomplete_elements
-        self.other_options = other_options
-        self.gmsh_executable = gmsh_executable
-        self.output_file_name = output_file_name
-        self.save_tmp_files_in = save_tmp_files_in
-        self.target_unit = target_unit.upper()
+        self.source: ScriptSource | FileSource | ScriptWithFilesSource = source
+        self.dimensions: int | None = dimensions
+        self.order: int | None = order
+        self.incomplete_elements: bool | None = incomplete_elements
+        self.other_options: tuple[str, ...] = other_options
+        self.gmsh_executable: str = gmsh_executable
+        self.output_file_name: str = output_file_name
+        self.save_tmp_files_in: str | None = save_tmp_files_in
+        self.target_unit: str = target_unit.upper()
+
+        self.temp_dir_mgr: _TempDirManager | None = None
+        self.output_file: TextIO | None = None
 
         if self.dimensions not in [1, 2, 3, None]:
             raise RuntimeError("dimensions must be one of 1,2,3 or None")
@@ -391,6 +394,10 @@ class GmshRunner:
                  type: type[BaseException] | None,
                  value: BaseException | None,
                  traceback: TracebackType | None) -> None:
-        self.output_file.close()
+        if self.output_file is not None:
+            self.output_file.close()
+            self.output_file = None
+
         if self.temp_dir_mgr is not None:
             self.temp_dir_mgr.clean_up()
+            self.temp_dir_mgr = None

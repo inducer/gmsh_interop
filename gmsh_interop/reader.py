@@ -25,7 +25,7 @@ THE SOFTWARE.
 
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Iterator, MutableSequence, Sequence
-from typing import ClassVar, Literal
+from typing import ClassVar, Literal, cast
 
 import numpy as np
 from typing_extensions import override
@@ -34,7 +34,7 @@ from pytools import memoize_method
 
 from gmsh_interop.runner import (  # noqa: F401
     FileSource,
-    LiteralSource,
+    LiteralSource,  # pyright: ignore[reportUnusedImport]
     ScriptSource,
     ScriptWithFilesSource,
 )
@@ -120,7 +120,7 @@ def generate_quad_vertex_tuples(dim: int, order: int) -> Iterator[tuple[int, ...
 
 class LineFeeder:
     def __init__(self, line_iterable: Iterable[str]) -> None:
-        self.line_iterable = iter(line_iterable)
+        self.line_iterable: Iterator[str] = iter(line_iterable)
         self.next_line: str | None = None
 
     def has_next_line(self) -> bool:
@@ -152,7 +152,7 @@ class LineFeeder:
 
 # {{{ element info
 
-IndexArray = np.ndarray[tuple[int, ...], np.dtype[np.integer]]
+IndexArray = np.typing.NDArray[np.integer]
 NodeTuples = Sequence[tuple[int, ...]]
 
 
@@ -214,7 +214,7 @@ class GmshElementBase(ABC):
 
 # {{{ simplices
 
-class GmshSimplexElementBase(GmshElementBase):
+class GmshSimplexElementBase(GmshElementBase, ABC):
     @override
     def vertex_count(self) -> int:
         return self.dimensions + 1
@@ -403,8 +403,8 @@ class GmshHexahedralElement(GmshTensorProductElementBase):
 
 # {{{ receiver interface
 
-Point = np.ndarray[tuple[int, ...], np.dtype[np.floating]]
-Nodes = np.ndarray[tuple[int, ...], np.dtype[np.floating]]
+Point = np.typing.NDArray[np.floating]
+Nodes = np.typing.NDArray[np.floating]
 
 
 def _gmsh_supported_element_type_map() -> dict[int, GmshElementBase]:
@@ -421,7 +421,7 @@ def _gmsh_supported_element_type_map() -> dict[int, GmshElementBase]:
     return {el.element_type: el for el in supported_elements}
 
 
-class GmshMeshReceiverBase:
+class GmshMeshReceiverBase(ABC):
     """
     .. autoattribute:: gmsh_element_type_to_info_map
 
@@ -438,32 +438,40 @@ class GmshMeshReceiverBase:
     gmsh_element_type_to_info_map: ClassVar[dict[int, GmshElementBase]] = (
         _gmsh_supported_element_type_map())
 
+    @abstractmethod
     def set_up_nodes(self, count: int) -> None:
         pass
 
+    @abstractmethod
     def add_node(self, node_nr: int, point: Point) -> None:
         pass
 
+    @abstractmethod
     def finalize_nodes(self) -> None:
         pass
 
+    @abstractmethod
     def set_up_elements(self, count: int) -> None:
         pass
 
+    @abstractmethod
     def add_element(self,
                     element_nr: int,
                     element_type: GmshElementBase,
                     vertex_nrs: IndexArray,
-                    lexicographic_nodes: Nodes,
+                    lexicographic_nodes: IndexArray,
                     tag_numbers: Sequence[int]) -> None:
         pass
 
+    @abstractmethod
     def finalize_elements(self) -> None:
         pass
 
+    @abstractmethod
     def add_tag(self, name: str, index: int, dimension: int) -> None:
         pass
 
+    @abstractmethod
     def finalize_tags(self) -> None:
         pass
 
@@ -473,14 +481,14 @@ class GmshMeshReceiverBase:
 # {{{ receiver example
 
 class GmshMeshReceiverNumPy(GmshMeshReceiverBase):
-    """GmshReceiver that loads fields into :mod:`numpy` arrays.
+    r"""GmshReceiver that loads fields into :mod:`numpy` arrays.
 
     This class emulates the semantics of :class:`meshpy.triangle.MeshInfo` and
-    :class:`meshpy.tet.MeshInfo` by using similar fields, but instead of loading
-    data into ForeignArrays, load into :mod:`numpy` arrays. Since this class is
-    not wrapping any libraries in other languages -- the Gmsh data is obtained
-    via parsing text -- use :mod:`numpy` arrays as the base array data structure
-    for convenience.
+    :class:`meshpy.tet.MeshInfo` by using similar field names. However, instead
+    of loading data into ``ForeignArray``\ s, it loads it into :mod:`numpy` arrays.
+
+    This class is not wrapping any libraries -- the Gmsh data is obtained
+    via parsing text.
 
     .. versionadded:: 2014.1
     """
@@ -502,7 +510,7 @@ class GmshMeshReceiverNumPy(GmshMeshReceiverBase):
         # Preallocate array of nodes within list; treat None as sentinel value.
         # Preallocation not done for performance, but to assign values at indices
         # in random order.
-        self.points = [None] * count
+        self.points = cast(MutableSequence[Point | None], [None] * count)
 
     @override
     def add_node(self, node_nr: int, point: Point) -> None:
@@ -516,9 +524,11 @@ class GmshMeshReceiverNumPy(GmshMeshReceiverBase):
     @override
     def set_up_elements(self, count: int) -> None:
         # Preallocation of arrays for assignment elements in random order.
-        self.elements = [None] * count
-        self.element_types = [None] * count
-        self.element_markers = [None] * count
+        self.elements = cast(MutableSequence[IndexArray | None], [None] * count)
+        self.element_types = (
+            cast(MutableSequence[GmshElementBase | None], [None] * count))
+        self.element_markers = (
+            cast(MutableSequence[Sequence[int] | None], [None] * count))
         self.tags = []
 
     @override
@@ -526,7 +536,7 @@ class GmshMeshReceiverNumPy(GmshMeshReceiverBase):
                     element_nr: int,
                     element_type: GmshElementBase,
                     vertex_nrs: IndexArray,
-                    lexicographic_nodes: Nodes,
+                    lexicographic_nodes: IndexArray,
                     tag_numbers: Sequence[int]) -> None:
         assert self.elements is not None
         self.elements[element_nr] = vertex_nrs
@@ -600,9 +610,12 @@ def generate_gmsh(
             save_tmp_files_in=save_tmp_files_in)
 
     with runner:
+        output_file = runner.output_file
+        assert output_file is not None
+
         parse_gmsh(
             receiver,
-            runner.output_file,
+            output_file,
             force_dimension=force_dimension)
 
 
@@ -636,12 +649,11 @@ def parse_gmsh(receiver: GmshMeshReceiverBase,
                 if next_line == f"$End{section_name}":
                     break
 
-                if line_count == 0:
-                    version_number, file_type, _data_size = next_line.split()
-
                 if line_count > 0:
                     raise GmshFileFormatError(
                             "More than one line found in 'MeshFormat' section")
+
+                version_number, file_type, _data_size = next_line.split()
 
                 if not version_number.startswith("2."):
                     # https://github.com/inducer/gmsh_interop/issues/18
