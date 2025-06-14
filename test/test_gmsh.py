@@ -115,10 +115,10 @@ def test_simplex_gmsh(dim: int,
     else:
         save_tmp_files_in = None
 
-    from gmsh_interop.reader import GmshMeshReceiverBase, generate_gmsh
+    from gmsh_interop.reader import GmshMeshReceiverNumPy, generate_gmsh
     from gmsh_interop.runner import ScriptSource
 
-    mr = GmshMeshReceiverBase()
+    mr = GmshMeshReceiverNumPy()
     source = ScriptSource(GMSH_SPHERE, "geo")
     generate_gmsh(mr, source, dimensions=dim, order=order, target_unit="MM",
             save_tmp_files_in=save_tmp_files_in)
@@ -137,7 +137,7 @@ def test_quad_gmsh(dim: int,
     else:
         save_tmp_files_in = None
 
-    from gmsh_interop.reader import GmshMeshReceiverBase, generate_gmsh
+    from gmsh_interop.reader import GmshMeshReceiverNumPy, generate_gmsh
     from gmsh_interop.runner import ScriptSource
 
     if dim == 2:
@@ -145,7 +145,7 @@ def test_quad_gmsh(dim: int,
     else:
         source = ScriptSource(GMSH_QUAD_CUBE, "geo")
 
-    mr = GmshMeshReceiverBase()
+    mr = GmshMeshReceiverNumPy()
     generate_gmsh(mr, source, dimensions=dim, order=order,
             save_tmp_files_in=save_tmp_files_in)
 
@@ -156,10 +156,12 @@ def test_lex_node_ordering() -> None:
     """Check that lex nodes go through axes 'in order', i.e. that the
     r-axis is the first one to become non-zero, then s, then t.
     """
-    from gmsh_interop.reader import _gmsh_supported_element_type_map
+    from gmsh_interop.reader import (
+        _gmsh_supported_element_type_map,  # pyright: ignore[reportPrivateUsage]
+    )
 
     for el in _gmsh_supported_element_type_map().values():
-        axis_nonzero_order = []
+        axis_nonzero_order: list[int] = []
 
         for node in el.lexicographic_node_tuples():
             nonzero_axes = {i for i, ni in enumerate(node) if ni}
