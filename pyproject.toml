@@ -87,7 +87,12 @@ known-local-folder = ["gmsh_interop"]
 lines-after-imports = 2
 
 [tool.basedpyright]
+pythonVersion = "3.10"
+pythonPlatform = "All"
+
 reportImplicitStringConcatenation = "none"
 reportUnnecessaryIsInstance = "none"
 reportUnusedCallResult = "none"
 reportAny = "none"
+
+exclude = [ "doc", ".env", ".conda-root" ]
