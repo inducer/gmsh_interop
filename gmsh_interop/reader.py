@@ -584,7 +584,7 @@ def read_gmsh(
 
 def generate_gmsh(
         receiver: GmshMeshReceiverBase,
-        source: str | ScriptSource | FileSource | ScriptWithFilesSource,
+        source: ScriptSource | FileSource | ScriptWithFilesSource,
         dimensions: int | None = None,
         order: int | None = None,
         other_options: tuple[str, ...] = (),
