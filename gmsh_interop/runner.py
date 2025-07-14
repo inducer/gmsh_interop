@@ -24,7 +24,7 @@ THE SOFTWARE.
 """
 
 import logging
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from types import TracebackType
 from typing import Literal, TextIO, TypeAlias
 
@@ -179,7 +179,7 @@ class GmshRunner:
             dimensions: int | None = None,
             order: int | None = None,
             incomplete_elements: bool | None = None,
-            other_options: tuple[str, ...] = (),
+            other_options: Sequence[str] = (),
             extension: str = "geo",
             gmsh_executable: str = "gmsh",
             output_file_name: str | None = None,
@@ -206,7 +206,7 @@ class GmshRunner:
         self.dimensions: int | None = dimensions
         self.order: int | None = order
         self.incomplete_elements: bool | None = incomplete_elements
-        self.other_options: tuple[str, ...] = other_options
+        self.other_options: Sequence[str] = other_options
         self.gmsh_executable: str = gmsh_executable
         self.output_file_name: str = output_file_name
         self.save_tmp_files_in: str | None = save_tmp_files_in
