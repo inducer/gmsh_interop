@@ -26,7 +26,7 @@ THE SOFTWARE.
 import logging
 from collections.abc import Iterable
 from types import TracebackType
-from typing import Literal, TextIO
+from typing import Literal, TextIO, TypeAlias
 
 from packaging.version import Version
 
@@ -169,10 +169,13 @@ def get_gmsh_version(executable: str = "gmsh") -> Version | None:
     return version
 
 
+GmshSource: TypeAlias = ScriptSource | FileSource | ScriptWithFilesSource
+
+
 class GmshRunner:
     def __init__(
             self,
-            source: str | ScriptSource | FileSource | ScriptWithFilesSource,
+            source: GmshSource,
             dimensions: int | None = None,
             order: int | None = None,
             incomplete_elements: bool | None = None,
