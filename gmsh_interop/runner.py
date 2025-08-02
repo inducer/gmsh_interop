@@ -42,6 +42,7 @@ __doc__ = """
 .. autoclass:: FileSource
 .. autoclass:: ScriptWithFilesSource
 
+.. autoclass:: GmshSource
 .. autoclass:: GmshRunner
 """
 
