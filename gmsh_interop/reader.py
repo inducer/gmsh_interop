@@ -33,7 +33,7 @@ from typing_extensions import override
 
 from pytools import memoize_method
 
-from gmsh_interop.runner import (  # noqa: F401
+from gmsh_interop.runner import (  # noqa: F401, TC001
     FileSource,
     LiteralSource,  # pyright: ignore[reportUnusedImport]
     ScriptSource,
@@ -513,7 +513,7 @@ class GmshMeshReceiverNumPy(GmshMeshReceiverBase):
         # Preallocate array of nodes within list; treat None as sentinel value.
         # Preallocation not done for performance, but to assign values at indices
         # in random order.
-        self.points = cast(MutableSequence[Point | None], [None] * count)
+        self.points = cast("MutableSequence[Point | None]", [None] * count)
 
     @override
     def add_node(self, node_nr: int, point: Point) -> None:
@@ -527,11 +527,11 @@ class GmshMeshReceiverNumPy(GmshMeshReceiverBase):
     @override
     def set_up_elements(self, count: int) -> None:
         # Preallocation of arrays for assignment elements in random order.
-        self.elements = cast(MutableSequence[IndexArray | None], [None] * count)
+        self.elements = cast("MutableSequence[IndexArray | None]", [None] * count)
         self.element_types = (
-            cast(MutableSequence[GmshElementBase | None], [None] * count))
+            cast("MutableSequence[GmshElementBase | None]", [None] * count))
         self.element_markers = (
-            cast(MutableSequence[Sequence[int] | None], [None] * count))
+            cast("MutableSequence[Sequence[int] | None]", [None] * count))
         self.tags = []
 
     @override

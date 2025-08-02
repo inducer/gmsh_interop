@@ -27,14 +27,16 @@ THE SOFTWARE.
 """
 
 import logging
-from collections.abc import Iterable, Sequence
-from types import TracebackType
-from typing import Literal, TextIO, TypeAlias
+from typing import TYPE_CHECKING, Literal, TextIO, TypeAlias
 
 from packaging.version import Version
 
 from pytools import memoize_method
 
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+    from types import TracebackType
 
 logger = logging.getLogger(__name__)
 
