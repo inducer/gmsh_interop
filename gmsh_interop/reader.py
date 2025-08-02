@@ -1,6 +1,5 @@
 """Reader for the GMSH file format."""
 
-
 __copyright__ = "Copyright (C) 2009 Xueyu Zhu, Andreas Kloeckner"
 
 __license__ = """
@@ -25,7 +24,7 @@ THE SOFTWARE.
 
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Iterator, MutableSequence, Sequence
-from typing import ClassVar, Literal, cast
+from typing import ClassVar, Literal, TypeAlias, cast
 
 import numpy as np
 from typing_extensions import override
@@ -45,6 +44,9 @@ __doc__ = """
 
 Element types
 -------------
+
+.. autoclass:: IndexArray
+.. autoclass:: NodeTuples
 
 .. autoclass:: GmshElementBase
 
@@ -84,7 +86,6 @@ Reader
 
 .. autofunction:: read_gmsh
 .. autofunction:: generate_gmsh
-
 """
 
 
@@ -152,8 +153,8 @@ class LineFeeder:
 
 # {{{ element info
 
-IndexArray = np.typing.NDArray[np.integer]
-NodeTuples = Sequence[tuple[int, ...]]
+IndexArray: TypeAlias = np.typing.NDArray[np.integer]
+NodeTuples: TypeAlias = Sequence[tuple[int, ...]]
 
 
 class GmshElementBase(ABC):
