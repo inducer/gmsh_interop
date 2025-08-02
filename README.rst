@@ -4,17 +4,17 @@ Interoperability between Python and Gmsh
 .. image:: https://gitlab.tiker.net/inducer/gmsh_interop/badges/main/pipeline.svg
     :alt: Gitlab Build Status
     :target: https://gitlab.tiker.net/inducer/gmsh_interop/commits/main
-.. image:: https://github.com/inducer/gmsh_interop/workflows/CI/badge.svg
+.. image:: https://github.com/inducer/gmsh_interop/actions/workflows/ci.yml/badge.svg
     :alt: Github Build Status
-    :target: https://github.com/inducer/gmsh_interop/actions?query=branch%3Amain+workflow%3ACI
-.. image:: https://badge.fury.io/py/gmsh_interop.png
+    :target: https://github.com/inducer/gmsh_interop/actions/workflows/ci.yml
+.. image:: https://badge.fury.io/py/gmsh_interop.svg
     :alt: Python Package Index Release Page
     :target: https://pypi.org/project/gmsh_interop/
 .. image:: https://zenodo.org/badge/113488057.svg
    :alt: Zenodo DOI for latest release
    :target: https://zenodo.org/doi/10.5281/zenodo.11075135
 
-This package allows Python to interoperate with the `gmsh <http://gmsh.info/>`_
+This package allows Python to interoperate with the `gmsh <http://gmsh.info/>`__
 mesh generator.
 
 This package contains:
@@ -27,6 +27,6 @@ to escape its obnoxious licensing.
 
 Links:
 
-* `Github <https://github.com/inducer/gmsh_interop>`_
-* `Python package index <https://pypi.org/project/gmsh_interop/>`_
-* `Documentation <https://documen.tician.de/gmsh_interop>`_
+* `Github <https://github.com/inducer/gmsh_interop>`__
+* `Python Package Index <https://pypi.org/project/gmsh_interop/>`__
+* `Documentation <https://documen.tician.de/gmsh_interop>`__
