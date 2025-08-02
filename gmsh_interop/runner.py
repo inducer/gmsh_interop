@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = """
 Copyright (C) 2017 Andreas Kloeckner
 Copyright (C) 2018 Alexandru Fikl
@@ -231,7 +234,7 @@ class GmshRunner:
 
         return result
 
-    def __enter__(self) -> "GmshRunner":
+    def __enter__(self) -> GmshRunner:
         self.temp_dir_mgr = None
         temp_dir_mgr = _TempDirManager()
         try:
