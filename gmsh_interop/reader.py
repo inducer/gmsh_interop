@@ -1,4 +1,6 @@
 """Reader for the GMSH file format."""
+from __future__ import annotations
+
 
 __copyright__ = "Copyright (C) 2009 Xueyu Zhu, Andreas Kloeckner"
 

@@ -85,6 +85,7 @@ combine-as-imports = true
 known-first-party = ["pytools"]
 known-local-folder = ["gmsh_interop"]
 lines-after-imports = 2
+required-imports = ["from __future__ import annotations"]
 
 [tool.basedpyright]
 pythonVersion = "3.10"
