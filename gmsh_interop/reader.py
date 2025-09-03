@@ -596,6 +596,7 @@ def generate_gmsh(
         force_dimension: int | None = None,
         target_unit: Literal["M", "MM"] | None = None,
         output_file_name: str | None = None,
+        save_output_file_in: str | None = None,
         save_tmp_files_in: str | None = None) -> None:
     """Run gmsh and feed the output to *receiver*.
 
@@ -610,6 +611,7 @@ def generate_gmsh(
             gmsh_executable=gmsh_executable,
             target_unit=target_unit,
             output_file_name=output_file_name,
+            save_output_file_in=save_output_file_in,
             save_tmp_files_in=save_tmp_files_in)
 
     with runner:
