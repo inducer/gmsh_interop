@@ -190,6 +190,7 @@ class GmshRunner:
             gmsh_executable: str = "gmsh",
             output_file_name: str | None = None,
             target_unit: Literal["M", "MM"] | None = None,
+            save_output_file_in: str | None = None,
             save_tmp_files_in: str | None = None) -> None:
         if isinstance(source, str):
             from warnings import warn
@@ -215,6 +216,7 @@ class GmshRunner:
         self.other_options: Sequence[str] = other_options
         self.gmsh_executable: str = gmsh_executable
         self.output_file_name: str = output_file_name
+        self.save_output_file_in: str | None = save_output_file_in
         self.save_tmp_files_in: str | None = save_tmp_files_in
         self.target_unit: str = target_unit.upper()
 
@@ -277,11 +279,12 @@ class GmshRunner:
                     delete=False, dir=expanduser("~")) as tmpf:
                 gmsh_tmp_name = basename(tmpf.name)
 
-            output_file_name = join(working_dir, self.output_file_name)
+            tmp_output_file_path = join(working_dir, self.output_file_name)
+
             cmdline = [
                     self.gmsh_executable,
                     "-setstring", "General.TmpFileName", gmsh_tmp_name,
-                    "-o", self.output_file_name,
+                    "-o", tmp_output_file_path,
                     "-nopopup",
                     "-format", "msh2",
                     ]
@@ -351,11 +354,18 @@ class GmshRunner:
                 msg += stderr+"\n"
                 warn(msg, stacklevel=2)
 
-            self.output_file = open(output_file_name)
+            import shutil
+            if self.save_output_file_in:
+                output_file_path = join(
+                    self.save_output_file_in, self.output_file_name)
+                shutil.move(tmp_output_file_path, output_file_path)
+            else:
+                output_file_path = tmp_output_file_path
+
+            self.output_file = open(output_file_path)
 
             if self.save_tmp_files_in:
                 import errno
-                import shutil
                 try:
                     shutil.copytree(working_dir, self.save_tmp_files_in)
                 except FileExistsError:
@@ -386,7 +396,7 @@ class GmshRunner:
                         shutil.copytree(working_dir, self.save_tmp_files_in)
                 except OSError as exc:
                     if exc.errno == errno.ENOTDIR:
-                        shutil.copy(output_file_name,
+                        shutil.copy(tmp_output_file_path,
                                     "/".join([self.save_tmp_files_in,
                                               self.output_file_name]))
                     else:
