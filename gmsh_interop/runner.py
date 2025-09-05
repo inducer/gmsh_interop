@@ -192,6 +192,15 @@ class GmshRunner:
             target_unit: Literal["M", "MM"] | None = None,
             save_output_file_in: str | None = None,
             save_tmp_files_in: str | None = None) -> None:
+        """
+        :arg output_file_name: the base name (including extension) of the output
+            mesh file.
+        :arg save_output_file_in: if specified, the output mesh file will be saved to
+            this directory.
+        :arg save_tmp_files_in: if specified, the temporary Gmsh files will be saved
+            to this directory.
+        """
+
         if isinstance(source, str):
             from warnings import warn
             warn("passing a string as 'source' is deprecated -- use "
