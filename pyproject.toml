@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gmsh_interop"
-version = "2024.2"
+version = "2025.1"
 description = "A parser for GMSH's .msh format"
 readme = "README.rst"
 license = "MIT"
