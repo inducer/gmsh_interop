@@ -30,6 +30,7 @@ import logging
 from typing import TYPE_CHECKING, Literal, TextIO, TypeAlias
 
 from packaging.version import Version
+from typing_extensions import Self
 
 from pytools import memoize_method
 
@@ -247,7 +248,7 @@ class GmshRunner:
 
         return result
 
-    def __enter__(self) -> GmshRunner:
+    def __enter__(self) -> Self:
         self.temp_dir_mgr = None
         temp_dir_mgr = _TempDirManager()
         try:
@@ -277,7 +278,7 @@ class GmshRunner:
                     copyfile(f, join(working_dir, basename(f)))
 
             else:
-                raise RuntimeError("'source' type unrecognized")
+                raise TypeError(f"'source' type unrecognized: {type(self.source)}")
 
             # gmsh uses a "~/.gmsh-tmp" by default as a temporary file name.
             # Unfortunately, GMSH also automatically prepends the home
@@ -387,10 +388,10 @@ class GmshRunner:
                         i, _o, _e = select.select([sys.stdin], [], [], 10)
                         if i:
                             resp = sys.stdin.readline().strip()
-                            if resp == "N" or resp == "n":
+                            if resp in {"N", "n"}:
                                 logger.info("Not overwriting.")
                                 decision = 0
-                            elif resp == "Y" or resp == "y" or not i:
+                            elif resp in {"Y", "y"} or not i:
                                 decision = 1
                                 logger.info("Overwriting.")
                             else:
@@ -406,14 +407,13 @@ class GmshRunner:
                 except OSError as exc:
                     if exc.errno == errno.ENOTDIR:
                         shutil.copy(tmp_output_file_path,
-                                    "/".join([self.save_tmp_files_in,
-                                              self.output_file_name]))
+                                    join(self.save_tmp_files_in, self.output_file_name))
                     else:
                         raise
 
             self.temp_dir_mgr = temp_dir_mgr
 
-            return self
+            return self  # noqa: TRY300
         except Exception:
             temp_dir_mgr.clean_up()
             raise

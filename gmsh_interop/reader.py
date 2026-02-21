@@ -288,12 +288,10 @@ class GmshIncompleteTriangularElement(GmshSimplexElementBase):
 
     @memoize_method
     def gmsh_node_tuples(self) -> NodeTuples:
-        result: list[tuple[int, ...]] = []
-        for tup in generate_triangle_vertex_tuples(self.order):
-            result.append(tup)
-        for tup in generate_triangle_edge_tuples(self.order):
-            result.append(tup)
-        return result
+        return [
+            *generate_triangle_vertex_tuples(self.order),
+            *generate_triangle_edge_tuples(self.order)
+        ]
 
 
 class GmshTriangularElement(GmshSimplexElementBase):
