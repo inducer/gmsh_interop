@@ -29,8 +29,9 @@ classifiers = [
 ]
 dependencies = [
     "numpy>=1.6.0",
-    "pytools>=2022.1.14",
     "packaging>=20.0",
+    "pytools>=2022.1.14",
+    "typing_extensions>=4.6"
 ]
 
 [project.optional-dependencies]
@@ -75,6 +76,10 @@ extend-ignore = [
     "UP031", # use f-strings instead of %
     "UP032", # use f-strings instead of .format
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"test/test_*.py" = ["S102"]
+"doc/conf.py" = ["S102", "DTZ002"]
 
 [tool.ruff.lint.flake8-quotes]
 inline-quotes = "double"
