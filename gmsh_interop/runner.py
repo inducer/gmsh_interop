@@ -413,7 +413,7 @@ class GmshRunner:
 
             self.temp_dir_mgr = temp_dir_mgr
 
-            return self  # noqa: TRY300
+            return self
         except Exception:
             temp_dir_mgr.clean_up()
             raise
