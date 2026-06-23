@@ -21,6 +21,8 @@ intersphinx_mapping = {
 
 sphinxconfig_missing_reference_aliases = {
     "GmshSource": "obj:gmsh_interop.runner.GmshSource",
+    "NDArray": "obj:numpy.typing.NDArray",
+    "numpy._typing._array_like.NDArray": "obj:numpy.typing.NDArray",
 }
 
 
