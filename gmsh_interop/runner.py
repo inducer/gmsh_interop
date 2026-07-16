@@ -86,7 +86,7 @@ class _TempDirManager:
         _erase_dir(self.path)
 
 
-class ScriptSource:  # noqa: B903
+class ScriptSource:  # ruff:ignore[class-as-data-structure]
     """
     .. versionadded:: 2016.1
     """
@@ -111,7 +111,7 @@ class LiteralSource(ScriptSource):
              DeprecationWarning, stacklevel=2)
 
 
-class FileSource:  # noqa: B903
+class FileSource:  # ruff:ignore[class-as-data-structure]
     """
     .. versionadded:: 2014.1
     """

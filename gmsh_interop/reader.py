@@ -33,7 +33,7 @@ from typing_extensions import override
 
 from pytools import memoize_method
 
-from gmsh_interop.runner import (  # noqa: F401, TC001
+from gmsh_interop.runner import (  # ruff:ignore[unused-import, typing-only-first-party-import]
     FileSource,
     LiteralSource,  # pyright: ignore[reportUnusedImport]
     ScriptSource,
